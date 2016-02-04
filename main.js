@@ -7,6 +7,11 @@ var then = Date.now();
 var interval = 1000 / fps;
 var delta;
 var imagesLoaded = 0;
+var currentLevel = 0;
+var targetLevel = 0;
+var level0 = 0;
+var level1 = 0;
+var lastHovered = -1;
 
 window.onload = function()
 {
@@ -18,6 +23,8 @@ function loaded(framesString)
   images = JSON.parse(framesString);
   canvas = document.getElementById('keyframeBrowser');
   context = canvas.getContext('2d');
+
+  addEventlistener();
 
   // crate image objects and set initial position
   var xPos = 0;
@@ -45,8 +52,12 @@ function loaded(framesString)
 
     xPos += images[i].currWidth;
   }
+}
 
+function addEventlistener()
+{
   canvas.onmousemove = canvasMouseMove;
+  canvas.onmousewheel = canvasOnMouseWheel;
 }
 
 function imageloaded ()
@@ -60,6 +71,16 @@ function imageloaded ()
 }
 
 function setTargetValues(hovered)
+{
+  setTargetValuesCoverFlow(hovered);
+
+  if (currentLevel != targetLevel)
+  {
+    setTargetValuesZoom();
+  }
+}
+
+function setTargetValuesCoverFlow(hovered)
 {
   var xPos = 0;
   var yPos = 300;
@@ -90,7 +111,12 @@ function setTargetValues(hovered)
   }
 }
 
-function canvasMouseMove(event)
+function setTargetValuesZoom()
+{
+  // TODO
+}
+
+function getHovered(event)
 {
   // get element which is hovered
   for (var i=0; i < images.length; i++)
@@ -98,10 +124,53 @@ function canvasMouseMove(event)
     // check bounds
     if (images[i].currX <= event.clientX && images[i].currX + images[i].currWidth >= event.clientX)
     {
-      setTargetValues(i);
-      break;
+      return i;
     }
   }
+}
+
+function canvasMouseMove(event)
+{
+  var hovered = getHovered(event);
+
+  if (lastHovered != hovered)
+  {
+    lastHovered = hovered;
+    setTargetValues(hovered);
+  }
+}
+
+function canvasOnMouseWheel(event)
+{
+  var hovered = getHovered(event);
+
+  if (event.deltaY < 0)
+  {
+    // zoom in
+    targetLevel++;
+  }
+  else
+  {
+    // zoom out
+    targetLevel--;
+  }
+
+  // check bounds
+  targetLevel = Math.min(2, targetLevel);
+  targetLevel = Math.max(0, targetLevel);
+
+  if (targetLevel == 1)
+  {
+    level0 = hovered;
+  }
+  else if (targetLevel == 2)
+  {
+    level1 = hovered;
+  }
+
+  setTargetValues(hovered);
+
+  event.preventDefault();
 }
 
 function draw()
@@ -172,3 +241,16 @@ function loadJSON(callback, file)
 
     xobj.send(null);
  }
+
+function getCurrentCluster()
+{
+  if (currentLevel == 0) {
+    return images;
+  }
+  else if (currentLevel == 1) {
+    return images[level0].childs;
+  }
+  else if (currentLevel == 2) {
+    return images[level0].childs[level1].childs;
+  }
+}
