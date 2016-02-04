@@ -1,14 +1,13 @@
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import com.google.gson.Gson;
 
 /**
  * Created by veren_000 on 04.02.2016.
  */
 public class Main {
     private static final String OUTPUT_FILE = "frames.json";
-    private static int LEVELS = 3;
+    private static int LEVELS = 4;
     private static final String NEW_LINE = System.lineSeparator();
     private static final int WIDTH = 300;
     private static final int HEIGHT = 169;
