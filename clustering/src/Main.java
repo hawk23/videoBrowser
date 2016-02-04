@@ -7,7 +7,7 @@ import java.util.List;
  */
 public class Main {
     private static final String OUTPUT_FILE = "frames.json";
-    private static int LEVELS = 4;
+    private static int LEVELS = 3;
     private static final String NEW_LINE = System.lineSeparator();
     private static final int WIDTH = 300;
     private static final int HEIGHT = 169;
@@ -86,7 +86,11 @@ public class Main {
                 }
 
                 // add the mid frame of the bottom segment to the current segment
-                Frame frame = bottomSegment.getFrames().get(numFramesPerSegment / 2);
+                int index = numFramesPerSegment / 2;
+                if (bottomSegment.getFrames().size() <= index) {
+                    index = bottomSegment.getFrames().size() - 1;
+                }
+                Frame frame = bottomSegment.getFrames().get(index);
                 Frame frameCopy = new Frame(frame.getSeconds(), frame.getFile());
                 // add the whole segment to the list of childs
                 frameCopy.setBottomSegment(bottomSegment);
