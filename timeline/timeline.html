@@ -1,0 +1,59 @@
+<!DOCTYPE html> 
+<html> 
+<body> 
+
+<canvas id="canvas"/>
+
+<script>
+Number.prototype.toMMSS = function () {
+    var sec_num = parseInt(this, 10);
+    var minutes = Math.floor(sec_num / 60);
+    var seconds = sec_num - (minutes * 60);
+
+    if (seconds < 10) {seconds = "0"+seconds;}
+    var time = minutes+':'+seconds;
+    return time;
+}
+
+const width = 1000;
+const widthExtra = 1100;
+const height = 40;
+const rangeFrom = 25;
+const rangeTo = 50;
+const videoLength = 597;
+
+function createTimeline() {
+    var canvas = document.getElementById("canvas");
+    var context = canvas.getContext("2d");	
+	context.canvas.width  = widthExtra;
+	context.canvas.height = height; 
+
+	// Fill the path
+	context.fillStyle = "#9ea7b8";
+	context.fillRect(0,0,width,height/4);
+	canvas.style.opacity = '0.5';
+	context.fillStyle = "black";
+    context.font = "bold 13px Arial";
+	
+	var timeRanges;
+	if (videoLength >= 600) {
+		timeRanges = 30;
+	} else {
+		timeRanges = 20;
+	}
+	
+	// create the timestamp every 10 oder 30 seconds
+	var numTimestamps = videoLength / timeRanges;
+	var timestampsOffset = width / numTimestamps;
+	var offset = 0;
+	for (var timestamp=0; timestamp<= videoLength; timestamp+= timeRanges) {
+		context.fillText(timestamp.toMMSS(), offset, height/3 + 20);		
+		offset = offset + timestampsOffset;
+	}
+	context.fillText(videoLength.toMMSS(), offset , height/3 + 20);
+}
+createTimeline();
+</script>
+
+</body> 
+</html>
