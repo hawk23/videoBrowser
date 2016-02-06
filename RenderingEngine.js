@@ -46,6 +46,7 @@ RenderingEngine.prototype.animate = function()
     this.renderables[i].currWidth += this.getAnimationStep(this.renderables[i].currWidth, this.renderables[i].targetWidth, this.renderables[i]);
     this.renderables[i].currX += this.getAnimationStep(this.renderables[i].currX, this.renderables[i].targetX, this.renderables[i]);
     this.renderables[i].currY += this.getAnimationStep(this.renderables[i].currY, this.renderables[i].targetY, this.renderables[i]);
+    this.renderables[i].currOpacity += this.getAnimationStep(this.renderables[i].currOpacity, this.renderables[i].targetOpacity, this.renderables[i]);
   }
 }
 
@@ -77,12 +78,16 @@ RenderingEngine.prototype.render = function()
 
     if (this.renderables[nextIdx].visible)
     {
+      this.context.globalAlpha = this.renderables[nextIdx].currOpacity;
+
       this.context.drawImage(
         this.renderables[nextIdx].image,
         this.renderables[nextIdx].currX,
         this.renderables[nextIdx].currY,
         this.renderables[nextIdx].currWidth,
         this.renderables[nextIdx].currHeight);
+
+      this.context.globalAlpha = 1;
     }
   }
 }

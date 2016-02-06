@@ -90,7 +90,8 @@ function setTargetValues(hovered)
 
   if (currentLevel != targetLevel)
   {
-    setTargetValuesZoom();
+    setTargetValuesZoom(hovered);
+    setTargetValuesPiles(hovered);
   }
 }
 
@@ -127,10 +128,15 @@ function setTargetValuesCoverFlow(hovered)
   }
 }
 
-function setTargetValuesZoom()
+function setTargetValuesZoom(hovered)
 {
   // hide hovered element and display next levels clusters
   var cluster = getCurrentCluster();
+
+  cluster[hovered].targetOpacity = 0;
+  cluster[hovered].steps = 10;
+
+  // zoom in next cluster
 }
 
 function getHovered(event)
@@ -238,7 +244,7 @@ function canvasMouseClick(event)
   {
     // left pile
     if (lastClicked != undefined) {
-      setTargetValuesOnClick(lastClicked - 1);
+      setTargetValuesPiles(lastClicked - 1);
       lastClicked--;
     }
   }
@@ -246,7 +252,7 @@ function canvasMouseClick(event)
   {
     // right pile
     if (lastClicked != undefined) {
-      setTargetValuesOnClick(lastClicked + 1);
+      setTargetValuesPiles(lastClicked + 1);
       lastClicked++;
     }
   } else {
@@ -259,14 +265,14 @@ function canvasMouseClick(event)
       if (cluster[i].currX <= event.clientX && cluster[i].currX + cluster[i].currWidth >= event.clientX)
       {
         lastClicked = i;
-        setTargetValuesOnClick(i);
+        setTargetValuesPiles(i);
         break;
       }
     }
   }
 }
 
-function setTargetValuesOnClick(clicked)
+function setTargetValuesPiles(clicked)
 {
   var cluster = getCurrentCluster();
   var scalingFactor = calculatedImgWidth / cluster[0].defaultWidth;
