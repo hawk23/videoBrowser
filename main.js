@@ -6,8 +6,8 @@ var MainApplication = function()
   this.video = document.getElementsByTagName("video")[0];
   this.isPlaying = false;
   this.isShown = true;
-
-  document.getElementById("play-pause").onmousedown = this.playPauseToggle.bind(this);
+  this.btnPlay = document.getElementById("play-pause");
+  this.btnPlay.onmousedown = this.playPauseToggle.bind(this);
 
   // init autohide
   this.autohideInterval = 4000;
@@ -73,12 +73,14 @@ MainApplication.prototype.playPauseToggle = function()
 
 MainApplication.prototype.play = function()
 {
+  this.btnPlay.className = "pause";
   this.video.play();
   this.isPlaying = true;
 }
 
 MainApplication.prototype.pause = function()
 {
+  this.btnPlay.className = "play";
   this.video.pause();
   this.isPlaying = false;
 }

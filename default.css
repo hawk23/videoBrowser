@@ -27,3 +27,36 @@ canvas#keyframeBrowser
   left: 0px;
   top: 350px;
 }
+
+div#controls
+{
+  width: 100%;
+  background-color: black;
+}
+
+div#controls button
+{
+  cursor:pointer;
+  background:black;
+  border:none;
+  text-indent: -9999em;
+  font-size: 0em;
+  width: 30px;
+  height: 30px;
+}
+
+div#controls button.play
+{
+  background:url("media/normal/play_normal.png") no-repeat center center;
+}
+
+div#controls button.pause
+{
+  background:url("media/normal/pause_normal.png") no-repeat center center;
+}
+
+
+button:focus
+{
+  outline:0;
+}
