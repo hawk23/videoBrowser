@@ -1,11 +1,5 @@
-var canvas;
-var context;
-var images;
-var fps = 30;
-var now;
-var then = Date.now();
-var interval = 1000 / fps;
-var delta;
+var renderables = [];
+var renderEngine;
 var imagesLoaded = 0;
 var currentLevel = 0;
 var targetLevel = 0;
@@ -20,11 +14,13 @@ window.onload = function()
 
 function loaded(framesString)
 {
-  images = JSON.parse(framesString);
-  canvas = document.getElementById('keyframeBrowser');
-  context = canvas.getContext('2d');
+  var images = JSON.parse(framesString);
+  var canvas = document.getElementById('keyframeBrowser');
+  var context = canvas.getContext('2d');
 
-  addEventlistener();
+  renderEngine = new RenderingEngine(canvas);
+
+  addEventlistener(canvas);
 
   // crate image objects and set initial position
   var xPos = 0;
@@ -36,25 +32,15 @@ function loaded(framesString)
     imageObj.onload = imageloaded;
     imageObj.src = "thumbnails/" + images[i].src;
 
-    images[i].image = imageObj;
+    var renderable = new Renderable(images[i].width/2, images[i].height/2, xPos, yPos - images[i].height/2, 1, imageObj, images[i].width, images[i].height);
+    renderables.push(renderable);
+    renderEngine.addRenderable(renderable);
 
-    // set current and target values
-    images[i].currWidth = images[i].width/2;
-    images[i].currHeight = images[i].height/2;
-    images[i].currX = xPos;
-    images[i].currY = yPos - images[i].currHeight;
-
-    images[i].targetWidth = images[i].currWidth;
-    images[i].targetHeight = images[i].currHeight;
-    images[i].targetX = images[i].currX;
-    images[i].targetY = images[i].currY;
-    images[i].steps = 1;
-
-    xPos += images[i].currWidth;
+    xPos += images[i].width/2;
   }
 }
 
-function addEventlistener()
+function addEventlistener(canvas)
 {
   canvas.onmousemove = canvasMouseMove;
   canvas.onmousewheel = canvasOnMouseWheel;
@@ -64,9 +50,9 @@ function imageloaded ()
 {
   imagesLoaded++;
 
-  if (imagesLoaded == images.length)
+  if (imagesLoaded == renderables.length)
   {
-    draw();
+    // nothing to do here for now
   }
 }
 
@@ -85,29 +71,29 @@ function setTargetValuesCoverFlow(hovered)
   var xPos = 0;
   var yPos = 300;
 
-  for(var i=0; i < images.length; i++)
+  for(var i=0; i < renderables.length; i++)
   {
     if (i == hovered)
     {
-      images[i].targetWidth = images[i].width;
-      images[i].targetHeight = images[i].height;
+      renderables[i].targetWidth = renderables[i].defaultWidth;
+      renderables[i].targetHeight = renderables[i].defaultHeight;
     }
     else if (i == hovered - 1 || i == hovered + 1)
     {
-      images[i].targetWidth = images[i].width/1.5;
-      images[i].targetHeight = images[i].height/1.5;
+      renderables[i].targetWidth = renderables[i].defaultWidth/1.5;
+      renderables[i].targetHeight = renderables[i].defaultHeight/1.5;
     }
     else
     {
-      images[i].targetWidth = images[i].width/2;
-      images[i].targetHeight = images[i].height/2;
+      renderables[i].targetWidth = renderables[i].defaultWidth/2;
+      renderables[i].targetHeight = renderables[i].defaultHeight/2;
     }
 
-    images[i].targetX = xPos;
-    images[i].targetY = yPos - images[i].targetHeight;
-    images[i].steps = 10;
+    renderables[i].targetX = xPos;
+    renderables[i].targetY = yPos - renderables[i].targetHeight;
+    renderables[i].steps = 10;
 
-    xPos += images[i].targetWidth;
+    xPos += renderables[i].targetWidth;
   }
 }
 
@@ -119,10 +105,10 @@ function setTargetValuesZoom()
 function getHovered(event)
 {
   // get element which is hovered
-  for (var i=0; i < images.length; i++)
+  for (var i=0; i < renderables.length; i++)
   {
     // check bounds
-    if (images[i].currX <= event.clientX && images[i].currX + images[i].currWidth >= event.clientX)
+    if (renderables[i].currX <= event.clientX && renderables[i].currX + renderables[i].currWidth >= event.clientX)
     {
       return i;
     }
@@ -173,57 +159,6 @@ function canvasOnMouseWheel(event)
   event.preventDefault();
 }
 
-function draw()
-{
-  requestAnimationFrame(draw);
-  now = Date.now();
-  delta = now - then;
-
-  if (delta > interval)
-  {
-    then = now - (delta % interval);
-
-    animate();
-    render();
-  }
-}
-
-// renders each display object based on its current size and position;
-function render()
-{
-  context.clearRect(0, 0, canvas.width, canvas.height);
-
-  for (var i=0; i < images.length; i++)
-  {
-    context.drawImage(images[i].image, images[i].currX, images[i].currY, images[i].currWidth, images[i].currHeight);
-  }
-}
-
-// sets the desired current position and size of each display object
-function animate()
-{
-  for (var i=0; i < images.length; i++)
-  {
-    images[i].currHeight += getAnimationStep(images[i].currHeight, images[i].targetHeight, images[i]);
-    images[i].currWidth += getAnimationStep(images[i].currWidth, images[i].targetWidth, images[i]);
-    images[i].currX += getAnimationStep(images[i].currX, images[i].targetX, images[i]);
-    images[i].currY += getAnimationStep(images[i].currY, images[i].targetY, images[i]);
-  }
-}
-
-function getAnimationStep(curr, target, image)
-{
-  if (curr == target) return 0;
-  if (image.steps <= 0) image.steps = 1;
-
-  var diff = target - curr;
-  var step = diff / image.steps;
-
-  // image.steps = Math.max(1, image.steps-1);
-
-  return step;
-}
-
 function loadJSON(callback, file)
 {
     var xobj = new XMLHttpRequest();
@@ -240,17 +175,17 @@ function loadJSON(callback, file)
     };
 
     xobj.send(null);
- }
+}
 
 function getCurrentCluster()
 {
   if (currentLevel == 0) {
-    return images;
+    return renderables;
   }
   else if (currentLevel == 1) {
-    return images[level0].childs;
+    return renderables[level0].childs;
   }
   else if (currentLevel == 2) {
-    return images[level0].childs[level1].childs;
+    return renderables[level0].childs[level1].childs;
   }
 }
