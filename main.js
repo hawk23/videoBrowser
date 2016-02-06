@@ -18,6 +18,8 @@ var xPosCoverflow;
 var lastClicked;
 var imgScalingFactor;
 
+var currentApplicationState;
+
 window.onload = function()
 {
   loadJSON(loaded, './frames.json');
@@ -40,8 +42,11 @@ function loaded(framesString)
   buildRenderablesTree(images, renderEngine, renderables);
   addEventlistener(canvas);
 
-  // display top level cluster
-  setTargetValues(2);
+  // create initial application state
+  currentApplicationState = new ApplicationState(0,0,0,2);
+
+  // display initial application state
+  displayApplicationState(null, currentApplicationState);
 }
 
 function buildRenderablesTree(images, renderEngine, targetCollection)
@@ -79,156 +84,6 @@ function buildRenderablesTree(images, renderEngine, targetCollection)
       buildRenderablesTree(images[i].childs, renderEngine, renderable.childs)
     }
   }
-
-}
-
-function addEventlistener(canvas)
-{
-  canvas.onmousemove = canvasMouseMove;
-  canvas.onmousewheel = canvasOnMouseWheel;
-  canvas.onmouseup = canvasMouseClick;
-}
-
-function setTargetValues(hovered)
-{
-  setTargetValuesCoverFlow(hovered);
-
-  if (currentLevel != targetLevel)
-  {
-    setTargetValuesZoom(hovered);
-    setTargetValuesPiles(hovered);
-  }
-}
-
-function setTargetValuesCoverFlow(hovered)
-{
-  var xPos = xPosCoverflow;
-  var yPos = 300;
-
-  var cluster = getCurrentCluster();
-
-  var imgWidth = cluster[0].defaultWidth * imgScalingFactor;
-  var imgHeight = cluster[0].defaultHeight * imgScalingFactor;
-
-  var bigFactor;
-  var middleFactor;
-  var smallFactor;
-
-  if (hovered === cluster.length - 1 || hovered === 0)
-  {
-    //xPos += calculatedImgWidth / 4;
-    bigFactor = 1.5;
-    middleFactor = 1;
-    smallFactor = 2.5 / (cluster.length - 2);
-  } else {
-    bigFactor = 1.5;
-    middleFactor = 1;
-    smallFactor = 1.5 / (cluster.length - 3);
-  }
-
-  for(var i=0; i < cluster.length; i++)
-  {
-    if (i == hovered)
-    {
-      cluster[i].targetWidth = imgWidth * bigFactor;
-      cluster[i].targetHeight = imgHeight * bigFactor;
-    }
-    else if (i == hovered - 1 || i == hovered + 1)
-    {
-      cluster[i].targetWidth = imgWidth * middleFactor;
-      cluster[i].targetHeight = imgHeight * middleFactor;
-    }
-    else
-    {
-      cluster[i].targetWidth = imgWidth * smallFactor;
-      cluster[i].targetHeight = imgHeight *smallFactor;
-    }
-
-    cluster[i].targetX = xPos;
-    cluster[i].targetY = yPos - cluster[i].targetHeight;
-    cluster[i].steps = 10;
-    cluster[i].visible = true;
-
-    xPos += cluster[i].targetWidth;
-  }
-}
-
-function setTargetValuesZoom(hovered)
-{
-  // hide hovered element and display next levels clusters
-  var cluster = getCurrentCluster();
-
-  cluster[hovered].targetOpacity = 0;
-  cluster[hovered].steps = 10;
-
-  // zoom in next cluster
-}
-
-function getHovered(event)
-{
-  var cluster = getCurrentCluster();
-
-  // get element which is hovered
-  for (var i=0; i < cluster.length; i++)
-  {
-    // check bounds
-    if (cluster[i].currX <= event.clientX && cluster[i].currX + cluster[i].currWidth >= event.clientX)
-    {
-      return i;
-    }
-  }
-
-  return -1;
-}
-
-function canvasMouseMove(event)
-{
-  if (event.clientX <= pileWidth || event.clientX >= canvas.width - pileWidth) {
-    // check if hovering on a pile
-    console.log("hovering on pile");
-    return;
-  }
-
-  var hovered = getHovered(event);
-
-  if (lastHovered != hovered && hovered != -1)
-  {
-    lastHovered = hovered;
-    setTargetValues(hovered);
-  }
-}
-
-function canvasOnMouseWheel(event)
-{
-  var hovered = getHovered(event);
-
-  if (event.deltaY < 0)
-  {
-    // zoom in
-    targetLevel++;
-  }
-  else
-  {
-    // zoom out
-    targetLevel--;
-  }
-
-  // check bounds
-  targetLevel = Math.min(2, targetLevel);
-  targetLevel = Math.max(0, targetLevel);
-
-  if (targetLevel == 1)
-  {
-    level0 = hovered;
-  }
-  else if (targetLevel == 2)
-  {
-    level1 = hovered;
-  }
-
-  setTargetValues(hovered);
-
-  event.preventDefault();
 }
 
 function loadJSON(callback, file)
@@ -249,57 +104,128 @@ function loadJSON(callback, file)
   xobj.send(null);
 }
 
-function getCurrentCluster()
+function displayApplicationState (before, after)
 {
-  if (currentLevel == 0) {
-    return renderables;
+  if (before != null && before.level != after.level)
+  {
+    displayZoom(before, after);
   }
-  else if (currentLevel == 1) {
-    return renderables[level0].childs;
-  }
-  else if (currentLevel == 2) {
-    return renderables[level0].childs[level1].childs;
-  }
+
+  displayCoverFlow(before, after);
+
+  // display piles
+  displayPiles(before, after);
+
+  this.currentApplicationState = after;
 }
 
-function canvasMouseClick(event)
+function displayZoom(before, after)
 {
-  // check if clicked on a pile
-  if (event.clientX <= pileWidth)
+  // zoom in
+  if (before.level < after.level)
   {
-    // left pile
-    if (lastClicked != undefined) {
-      setTargetValuesPiles(lastClicked - 1);
-      lastClicked--;
-    }
-  }
-  else if (event.clientX >= canvas.width - pileWidth)
-  {
-    // right pile
-    if (lastClicked != undefined) {
-      setTargetValuesPiles(lastClicked + 1);
-      lastClicked++;
-    }
-  } else {
-    // get element which is clicked
+    // fade out hovered item
+    var cluster = getCluster(before.level, before);
 
-    var cluster = getCurrentCluster();
-    for (var i=0; i < cluster.length; i++)
+    cluster[after.getParentItem()].targetOpacity = 0;
+    cluster[after.getParentItem()].steps = 10;
+
+    // center all images of next cluster to get nice zoom in animation
+    var nextCluster = getCluster(after.level, after);
+    for (var i=0; i < nextCluster.length; i++)
     {
-      // check bounds
-      if (cluster[i].currX <= event.clientX && cluster[i].currX + cluster[i].currWidth >= event.clientX)
-      {
-        lastClicked = i;
-        setTargetValuesPiles(i);
-        break;
-      }
+      nextCluster[i].currOpacity = 0;
+      nextCluster[i].currWidth = cluster[after.getParentItem()].currWidth;
+      nextCluster[i].currHeight = cluster[after.getParentItem()].currHeight;
+      nextCluster[i].currX = cluster[after.getParentItem()].currX;
+      nextCluster[i].currY = cluster[after.getParentItem()].currY;
+    }
+  }
+  else if (before.level > after.level)
+  {
+    // fade in selected item from parent cluster
+    var cluster = getCluster(after.level, after);
+
+    cluster[after.hovered].currOpacity = 0;
+    cluster[after.hovered].steps = 10;
+
+    // fade out last cluster
+    var lastCluster = getCluster(before.level, before);
+    for (var i=0; i < lastCluster.length; i++)
+    {
+      lastCluster[i].targetOpacity = 0;
+      lastCluster[i].targWidth = cluster[after.hovered].currWidth;
+      lastCluster[i].targetHeight = cluster[after.hovered].currHeight;
+      lastCluster[i].targetX = cluster[after.hovered].currX;
+      lastCluster[i].targetY = cluster[after.hovered].currY;
     }
   }
 }
 
-function setTargetValuesPiles(clicked)
+function displayCoverFlow(before, after)
 {
-  var cluster = getCurrentCluster();
+  var xPos = xPosCoverflow;
+  var yPos = 300;
+
+  var cluster = getCluster(after.level, after);
+
+  var imgWidth = cluster[0].defaultWidth * imgScalingFactor;
+  var imgHeight = cluster[0].defaultHeight * imgScalingFactor;
+
+  var bigFactor;
+  var middleFactor;
+  var smallFactor;
+
+  if (after.hovered === cluster.length - 1 || after.hovered === 0)
+  {
+    //xPos += calculatedImgWidth / 4;
+    bigFactor = 1.5;
+    middleFactor = 1;
+    smallFactor = 2.5 / (cluster.length - 2);
+  } else {
+    bigFactor = 1.5;
+    middleFactor = 1;
+    smallFactor = 1.5 / (cluster.length - 3);
+  }
+
+  for(var i=0; i < cluster.length; i++)
+  {
+    if (i == after.hovered)
+    {
+      cluster[i].targetWidth = imgWidth * bigFactor;
+      cluster[i].targetHeight = imgHeight * bigFactor;
+    }
+    else if (i == after.hovered - 1 || i == after.hovered + 1)
+    {
+      cluster[i].targetWidth = imgWidth * middleFactor;
+      cluster[i].targetHeight = imgHeight * middleFactor;
+    }
+    else
+    {
+      cluster[i].targetWidth = imgWidth * smallFactor;
+      cluster[i].targetHeight = imgHeight *smallFactor;
+    }
+
+    cluster[i].targetX = xPos;
+    cluster[i].targetY = yPos - cluster[i].targetHeight;
+    cluster[i].steps = 10;
+    cluster[i].visible = true;
+    cluster[i].targetOpacity = 1;
+
+    xPos += cluster[i].targetWidth;
+  }
+}
+
+function displayPiles(before, after)
+{
+  // piles can be only displayed when not level 0
+  if (after.level == 0) return;
+
+  // get parent cluster
+  var cluster = getCluster(after.level - 1, after);
+
+  // determine selected element
+  var selectedParent = after.getParentItem();
 
   var imgWidth = cluster[0].defaultWidth * imgScalingFactor;
   var imgHeight = cluster[0].defaultHeight * imgScalingFactor;
@@ -311,20 +237,22 @@ function setTargetValuesPiles(clicked)
   var pileRightPosY = 200;
 
   // center clicked image
-  cluster[clicked].targetX = (canvas.width/2) - (imgWidth/2);
-  cluster[clicked].targetY = 200;
-  cluster[clicked].steps = 10;
-  cluster[clicked].targetWidth = imgWidth;
-  cluster[clicked].targetHeight = imgHeight;
+  cluster[selectedParent].targetX = (canvas.width/2) - (imgWidth/2);
+  cluster[selectedParent].targetY = 200;
+  cluster[selectedParent].steps = 10;
+  cluster[selectedParent].targetWidth = imgWidth;
+  cluster[selectedParent].targetHeight = imgHeight;
+  cluster[selectedParent].targetOpacity = 0;
 
   // pile renderables left from clicked on left side
-  for(var i=0; i < clicked; i++)
+  for(var i=0; i < selectedParent; i++)
   {
     cluster[i].targetX = pileLeftPosX;
     cluster[i].targetY = pileLeftPosY;
     cluster[i].targetWidth = imgWidth/2;
     cluster[i].targetHeight = imgHeight/2;
     cluster[i].currZ = 1 + i;
+    cluster[i].targetOpacity = 1;
 
     pileLeftPosX += pileImageDisplacement;
     pileLeftPosY += pileImageDisplacement;
@@ -332,18 +260,112 @@ function setTargetValuesPiles(clicked)
     cluster[i].steps = 10;
   }
 
-  // pile renderables right from clicked on right side
-  for (var i=cluster.length-1; i > clicked; i--)
+  // pile renderables right from selectedParent on right side
+  for (var i=cluster.length-1; i > selectedParent; i--)
   {
     cluster[i].targetX = pileRightPosX;
     cluster[i].targetY = pileRightPosY;
     cluster[i].targetWidth = imgWidth/2;
     cluster[i].targetHeight = imgHeight/2;
     cluster[i].currZ = 1000 - i;
-
+    cluster[i].targetOpacity = 1;
+    
     pileRightPosX -= pileImageDisplacement;
     pileRightPosY += pileImageDisplacement;
 
     cluster[i].steps = 10;
   }
+}
+
+function getCluster(level, appState)
+{
+  if (level == 0) {
+    return renderables;
+  }
+  else if (level == 1) {
+    return renderables[appState.level0Selected].childs;
+  }
+  else if (level == 2) {
+    return renderables[appState.level0Selected].childs[appState.level1Selected].childs;
+  }
+}
+
+function addEventlistener(canvas)
+{
+  canvas.onmousemove = canvasMouseMove;
+  canvas.onmousewheel = canvasOnMouseWheel;
+  canvas.onmouseup = canvasMouseClick;
+}
+
+function canvasMouseMove(event)
+{
+  // check if hovering on a pile
+  if (event.clientX <= pileWidth || event.clientX >= canvas.width - pileWidth) return;
+
+  var hovered = getHovered(event);
+
+  if (currentApplicationState.hovered != hovered && hovered != -1)
+  {
+    var afterState = currentApplicationState.clone();
+    afterState.hovered = hovered;
+
+    displayApplicationState(currentApplicationState, afterState);
+  }
+}
+
+function canvasOnMouseWheel(event)
+{
+  var hovered = getHovered(event);
+  var afterState = currentApplicationState.clone();
+
+  if (event.deltaY < 0)
+  {
+    afterState.zoomIn(hovered);
+  }
+  else
+  {
+    afterState.zoomOut();
+  }
+
+  displayApplicationState(currentApplicationState, afterState);
+
+  event.preventDefault();
+}
+
+function canvasMouseClick(event)
+{
+  // check if clicked on a pile
+  // left pile
+  if (event.clientX <= pileWidth)
+  {
+    var afterState = currentApplicationState.clone();
+    afterState.shiftRight();
+
+    displayApplicationState(currentApplicationState, afterState);
+  }
+  // right pile
+  else if (event.clientX >= canvas.width - pileWidth)
+  {
+    var afterState = currentApplicationState.clone();
+    afterState.shiftLeft();
+
+    displayApplicationState(currentApplicationState, afterState);
+  }
+}
+
+function getHovered(event)
+{
+  var cluster = getCluster(currentApplicationState.level, currentApplicationState);
+
+  // get element which is hovered
+  for (var i=0; i < cluster.length; i++)
+  {
+    // check bounds
+    if (cluster[i].currX <= event.clientX && cluster[i].currX + cluster[i].currWidth >= event.clientX)
+    {
+      return i;
+    }
+  }
+
+  return -1;
 }
