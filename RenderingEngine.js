@@ -52,9 +52,27 @@ RenderingEngine.prototype.render = function()
 {
   this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+  var renderingOrder = [];
   for (var i=0; i < this.renderables.length; i++)
   {
-    this.context.drawImage(this.renderables[i].image, this.renderables[i].currX, this.renderables[i].currY, this.renderables[i].currWidth, this.renderables[i].currHeight);
+    renderingOrder.push({index: i, z: this.renderables[i].currZ})
+  }
+
+  // sort image indexes ascending by z values
+  renderingOrder.sort(
+    function (a,b)
+    {
+      if (a.z < b.z) return -1;
+      else if (a.z > b.z) return 1;
+      else return 0;
+    }
+  );
+
+  var nextIdx;
+  for (var i=0; i < renderingOrder.length; i++)
+  {
+    nextIdx = renderingOrder[i].index;
+    this.context.drawImage(this.renderables[nextIdx].image, this.renderables[nextIdx].currX, this.renderables[nextIdx].currY, this.renderables[nextIdx].currWidth, this.renderables[nextIdx].currHeight);
   }
 }
 

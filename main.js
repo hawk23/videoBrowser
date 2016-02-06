@@ -6,6 +6,16 @@ var targetLevel = 0;
 var level0 = 0;
 var level1 = 0;
 var lastHovered = -1;
+var canvas;
+var context;
+
+var imgCount = 5; // of current level
+var paddingPileToCoverflow = 10;
+var pileImageDisplacement = 10;
+var calculatedImgWidth;
+var pileWidth;
+var xPosCoverflow;
+var lastClicked;
 
 window.onload = function()
 {
@@ -15,15 +25,20 @@ window.onload = function()
 function loaded(framesString)
 {
   var images = JSON.parse(framesString);
-  var canvas = document.getElementById('keyframeBrowser');
-  var context = canvas.getContext('2d');
+  canvas = document.getElementById('keyframeBrowser');
+  context = canvas.getContext('2d');
+
+  // calculate coverflow and pile areas depending on canvas width
+  calculatedImgWidth = (canvas.width - 2 * (imgCount - 1) * paddingPileToCoverflow -  2 * pileImageDisplacement) / (imgCount + 1);
+  pileWidth = (imgCount - 1) * pileImageDisplacement + calculatedImgWidth/2;
+  xPosCoverflow = pileWidth + paddingPileToCoverflow;
 
   renderEngine = new RenderingEngine(canvas);
 
   addEventlistener(canvas);
 
   // crate image objects and set initial position
-  var xPos = 0;
+  var xPos = xPosCoverflow;
   var yPos = 300;
 
   for (var i=0; i < images.length; i++)
@@ -44,6 +59,7 @@ function addEventlistener(canvas)
 {
   canvas.onmousemove = canvasMouseMove;
   canvas.onmousewheel = canvasOnMouseWheel;
+  canvas.onmouseup = canvasMouseClick;
 }
 
 function imageloaded ()
@@ -68,7 +84,7 @@ function setTargetValues(hovered)
 
 function setTargetValuesCoverFlow(hovered)
 {
-  var xPos = 0;
+  var xPos = xPosCoverflow;
   var yPos = 300;
 
   for(var i=0; i < renderables.length; i++)
@@ -117,6 +133,12 @@ function getHovered(event)
 
 function canvasMouseMove(event)
 {
+  if (event.clientX <= pileWidth || event.clientX >= canvas.width - pileWidth) {
+    // check if hovering on a pile
+    console.log("hovering on pile");
+    return;
+  }
+
   var hovered = getHovered(event);
 
   if (lastHovered != hovered)
@@ -187,5 +209,91 @@ function getCurrentCluster()
   }
   else if (currentLevel == 2) {
     return renderables[level0].childs[level1].childs;
+  }
+}
+
+function canvasMouseClick(event)
+{
+  // check if clicked on a pile
+  if (event.clientX <= pileWidth)
+  {
+    // left pile
+    if (lastClicked != undefined) {
+      setTargetValuesOnClick(lastClicked - 1);
+      lastClicked--;
+    }
+  }
+  else if (event.clientX >= canvas.width - pileWidth)
+  {
+    // right pile
+    if (lastClicked != undefined) {
+      setTargetValuesOnClick(lastClicked + 1);
+      lastClicked++;
+    }
+  } else {
+    // get element which is clicked
+
+    var childCluster;
+    for (var i=0; i < renderables.length; i++)
+    {
+      // check bounds
+      if (renderables[i].currX <= event.clientX && renderables[i].currX + renderables[i].currWidth >= event.clientX)
+      {
+        lastClicked = i;
+        setTargetValuesOnClick(i);
+        break;
+      }
+    }
+  }
+}
+
+function setTargetValuesOnClick(clicked)
+{
+  var scalingFactor = calculatedImgWidth / renderables[0].defaultWidth;
+
+  var imgWidth = renderables[0].defaultWidth * scalingFactor;
+  var imgHeight = renderables[0].defaultHeight * scalingFactor;
+
+  var pileLeftPosX = 0;
+  var pileRightPosX = canvas.width - imgWidth/2;
+
+  var pileLeftPosY = 200;
+  var pileRightPosY = 200;
+
+  // center clicked image
+  renderables[clicked].targetX = (canvas.width/2) - (imgWidth/2);
+  renderables[clicked].targetY = 200;
+  renderables[clicked].steps = 10;
+  renderables[clicked].targetWidth = imgWidth;
+  renderables[clicked].targetHeight = imgHeight;
+
+  // pile renderables left from clicked on left side
+  for(var i=0; i < clicked; i++)
+  {
+    renderables[i].targetX = pileLeftPosX;
+    renderables[i].targetY = pileLeftPosY;
+    renderables[i].targetWidth = imgWidth/2;
+    renderables[i].targetHeight = imgHeight/2;
+    renderables[i].currZ = 1 + i;
+
+    pileLeftPosX += pileImageDisplacement;
+    pileLeftPosY += pileImageDisplacement;
+
+    renderables[i].steps = 10;
+  }
+
+  // pile renderables right from clicked on right side
+  for (var i=renderables.length-1; i > clicked; i--)
+  {
+    renderables[i].targetX = pileRightPosX;
+    renderables[i].targetY = pileRightPosY;
+    renderables[i].targetWidth = imgWidth/2;
+    renderables[i].targetHeight = imgHeight/2;
+    renderables[i].currZ = 1000 - i;
+
+    pileRightPosX -= pileImageDisplacement;
+    pileRightPosY += pileImageDisplacement;
+
+    renderables[i].steps = 10;
   }
 }

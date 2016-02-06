@@ -1,5 +1,6 @@
 var Renderable = function(currWidth, currHeight, currX, currY, currOpacity, image, defaultWidth, defaultHeight)
 {
+  this.currZ = 0;
   this.currWidth = currWidth;
   this.currHeight = currHeight;
   this.currX = currX;
@@ -8,6 +9,7 @@ var Renderable = function(currWidth, currHeight, currX, currY, currOpacity, imag
   this.steps = 1;
   this.image = image;
 
+  this.targetZ = this.currZ;
   this.targetWidth = this.currWidth;
   this.targetHeight = this.currHeight;
   this.targetX = this.currX;
