@@ -1,4 +1,4 @@
-var Renderable = function(currWidth, currHeight, currX, currY, currOpacity, image, defaultWidth, defaultHeight)
+var Renderable = function(currWidth, currHeight, currX, currY, currOpacity, image, defaultWidth, defaultHeight, visible)
 {
   this.currZ = 0;
   this.currWidth = currWidth;
@@ -20,4 +20,5 @@ var Renderable = function(currWidth, currHeight, currX, currY, currOpacity, imag
   this.defaultHeight = defaultHeight;
 
   this.childs = [];
+  this.visible = visible;
 }

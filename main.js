@@ -34,9 +34,17 @@ function loaded(framesString)
   xPosCoverflow = pileWidth + paddingPileToCoverflow;
 
   renderEngine = new RenderingEngine(canvas);
+  renderables = [];
 
+  buildRenderablesTree(images, renderEngine, renderables);
   addEventlistener(canvas);
 
+  // display top level cluster
+  setTargetValues(2);
+}
+
+function buildRenderablesTree(images, renderEngine, targetCollection)
+{
   // crate image objects and set initial position
   var xPos = xPosCoverflow;
   var yPos = 300;
@@ -44,14 +52,28 @@ function loaded(framesString)
   for (var i=0; i < images.length; i++)
   {
     var imageObj = new Image();
-    imageObj.onload = imageloaded;
     imageObj.src = "thumbnails/" + images[i].src;
 
-    var renderable = new Renderable(images[i].width/2, images[i].height/2, xPos, yPos - images[i].height/2, 1, imageObj, images[i].width, images[i].height);
-    renderables.push(renderable);
+    var renderable = new Renderable(
+      images[i].width/2,
+      images[i].height/2,
+      xPos,
+      yPos - images[i].height/2,
+      1,
+      imageObj,
+      images[i].width,
+      images[i].height,
+      false);
+
+    targetCollection.push(renderable);
     renderEngine.addRenderable(renderable);
 
     xPos += images[i].width/2;
+
+    if (images[i].hasOwnProperty("childs") && images[i].childs.length > 0)
+    {
+      buildRenderablesTree(images[i].childs, renderEngine, renderable.childs)
+    }
   }
 }
 
@@ -60,16 +82,6 @@ function addEventlistener(canvas)
   canvas.onmousemove = canvasMouseMove;
   canvas.onmousewheel = canvasOnMouseWheel;
   canvas.onmouseup = canvasMouseClick;
-}
-
-function imageloaded ()
-{
-  imagesLoaded++;
-
-  if (imagesLoaded == renderables.length)
-  {
-    // nothing to do here for now
-  }
 }
 
 function setTargetValues(hovered)
@@ -108,6 +120,7 @@ function setTargetValuesCoverFlow(hovered)
     renderables[i].targetX = xPos;
     renderables[i].targetY = yPos - renderables[i].targetHeight;
     renderables[i].steps = 10;
+    renderables[i].visible = true;
 
     xPos += renderables[i].targetWidth;
   }
