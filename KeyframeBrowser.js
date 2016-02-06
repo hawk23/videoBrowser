@@ -240,6 +240,9 @@ KeyframeBrowser.prototype.displayCoverFlow = function(before, after)
   }
 }
 
+/**
+ * Manages the displaying of the piles on each side of the window.
+ */
 KeyframeBrowser.prototype.displayPiles = function(before, after)
 {
   // piles can be only displayed when not level 0
@@ -260,12 +263,8 @@ KeyframeBrowser.prototype.displayPiles = function(before, after)
   var pileLeftPosY = this.yOffsetPile;
   var pileRightPosY = this.yOffsetPile;
 
-  // center clicked image
-  cluster[selectedParent].targetX = (this.canvas.width/2) - (imgWidth/2);
-  cluster[selectedParent].targetY = this.yOffsetPile;
-  cluster[selectedParent].steps = this.defaultSteps;
-  cluster[selectedParent].targetWidth = imgWidth;
-  cluster[selectedParent].targetHeight = imgHeight;
+  // hide clicked image
+  cluster[selectedParent].steps = 1;
   cluster[selectedParent].targetOpacity = 0;
 
   // pile renderables left from clicked on left side
@@ -301,27 +300,57 @@ KeyframeBrowser.prototype.displayPiles = function(before, after)
   }
 }
 
+/**
+ * Shifts the cluster displayed in the middle to one side.
+ * Stacks all invisible items which should appear in the middle next on the correct
+ * side for smooth animation
+ */
 KeyframeBrowser.prototype.displayShift = function(before, after)
 {
-  console.log("displayShift");
+  var cluster = this.getCluster(before.level, before);
+  var clusterNext = this.getCluster(after.level, after);
 
-  cluster = this.getCluster(before.level, before);
+  var itemsOnLeftSide = before.getParentItem();
+  var itemsOnRightSide = this.imgCount - itemsOnLeftSide - 1;
 
-  // shift cluster to one side
   for (var i=0; i < cluster.length; i++)
   {
     cluster[i].targetWidth = cluster[i].defaultWidth * this.imgScalingFactor / 2;
     cluster[i].targetHeight = cluster[i].defaultHeight * this.imgScalingFactor / 2;
     cluster[i].targetOpacity = 0;
-    cluster[i].targetY = this.yOffsetPile;
 
     if (before.getParentItem() < after.getParentItem())
     {
-      cluster[i].targetX = 0;
+      // shift to the left
+      cluster[i].targetX = this.pileImageDisplacement * itemsOnLeftSide;
+      cluster[i].targetY = this.yOffsetPile + (this.pileImageDisplacement * itemsOnLeftSide);
     }
     else
     {
-      cluster[i].targetX = this.canvas.width;
+      // shift to the right
+      cluster[i].targetX = this.canvas.width - (this.pileImageDisplacement * itemsOnRightSide) - cluster[i].targetWidth;
+      cluster[i].targetY = this.yOffsetPile + (this.pileImageDisplacement * itemsOnRightSide);
+    }
+  }
+
+  // stack next cluster to one side
+  for (var i = 0; i < clusterNext.length; i++)
+  {
+    clusterNext[i].currWidth = clusterNext[i].defaultWidth * this.imgScalingFactor / 2;
+    clusterNext[i].currHeight = clusterNext[i].defaultHeight * this.imgScalingFactor / 2;
+    clusterNext[i].currOpacity = 0;
+
+    if (before.getParentItem() < after.getParentItem())
+    {
+      // stack on right side
+      clusterNext[i].currX = this.canvas.width - (this.pileImageDisplacement * itemsOnRightSide) - clusterNext[i].targetWidth;
+      clusterNext[i].currY = this.yOffsetPile + (this.pileImageDisplacement * itemsOnRightSide);
+    }
+    else
+    {
+      // stack on left side
+      clusterNext[i].currX = this.pileImageDisplacement * itemsOnLeftSide;
+      clusterNext[i].currY = this.yOffsetPile + (this.pileImageDisplacement * itemsOnLeftSide);
     }
   }
 }
