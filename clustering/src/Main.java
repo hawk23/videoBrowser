@@ -8,7 +8,6 @@ import java.util.List;
 public class Main {
     private static final String OUTPUT_FILE = "frames.json";
     private static int LEVELS = 3;
-    private static final String NEW_LINE = System.lineSeparator();
     private static final int WIDTH = 300;
     private static final int HEIGHT = 169;
 
