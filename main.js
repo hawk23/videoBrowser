@@ -16,11 +16,12 @@ var calculatedImgWidth;
 var pileWidth;
 var xPosCoverflow;
 var lastClicked;
+var imgScalingFactor;
 
 window.onload = function()
 {
   loadJSON(loaded, './frames.json');
-}
+};
 
 function loaded(framesString)
 {
@@ -29,7 +30,7 @@ function loaded(framesString)
   context = canvas.getContext('2d');
 
   // calculate coverflow and pile areas depending on canvas width
-  calculatedImgWidth = (canvas.width - 2 * (imgCount - 1) * paddingPileToCoverflow -  2 * pileImageDisplacement) / (imgCount + 1);
+  calculatedImgWidth = (canvas.width - 2 * (imgCount - 1) * paddingPileToCoverflow -  2 * pileImageDisplacement) / (imgCount+1);
   pileWidth = (imgCount - 1) * pileImageDisplacement + calculatedImgWidth/2;
   xPosCoverflow = pileWidth + paddingPileToCoverflow;
 
@@ -47,12 +48,17 @@ function loaded(framesString)
     imageObj.onload = imageloaded;
     imageObj.src = "thumbnails/" + images[i].src;
 
-    var renderable = new Renderable(images[i].width/2, images[i].height/2, xPos, yPos - images[i].height/2, 1, imageObj, images[i].width, images[i].height);
+    if (!imgScalingFactor) {
+      imgScalingFactor = calculatedImgWidth / images[i].width;
+    }
+
+    var renderable = new Renderable(images[i].width * imgScalingFactor, images[i].height * imgScalingFactor, xPos, yPos - images[i].height/2, 1, imageObj, images[i].width, images[i].height);
     renderables.push(renderable);
     renderEngine.addRenderable(renderable);
 
     xPos += images[i].width/2;
   }
+
 }
 
 function addEventlistener(canvas)
@@ -87,22 +93,41 @@ function setTargetValuesCoverFlow(hovered)
   var xPos = xPosCoverflow;
   var yPos = 300;
 
+  var imgWidth = renderables[0].defaultWidth * imgScalingFactor;
+  var imgHeight = renderables[0].defaultHeight * imgScalingFactor;
+
+  var bigFactor;
+  var middleFactor;
+  var smallFactor;
+
+  if (hovered === renderables.length - 1 || hovered === 0)
+  {
+    //xPos += calculatedImgWidth / 4;
+    bigFactor = 1.5;
+    middleFactor = 1;
+    smallFactor = 2.5 / (renderables.length - 2);
+  } else {
+    bigFactor = 1.5;
+    middleFactor = 1;
+    smallFactor = 1.5 / (renderables.length - 3);
+  }
+
   for(var i=0; i < renderables.length; i++)
   {
     if (i == hovered)
     {
-      renderables[i].targetWidth = renderables[i].defaultWidth;
-      renderables[i].targetHeight = renderables[i].defaultHeight;
+      renderables[i].targetWidth = imgWidth * bigFactor;
+      renderables[i].targetHeight = imgHeight * bigFactor;
     }
     else if (i == hovered - 1 || i == hovered + 1)
     {
-      renderables[i].targetWidth = renderables[i].defaultWidth/1.5;
-      renderables[i].targetHeight = renderables[i].defaultHeight/1.5;
+      renderables[i].targetWidth = imgWidth * middleFactor;
+      renderables[i].targetHeight = imgHeight * middleFactor;
     }
     else
     {
-      renderables[i].targetWidth = renderables[i].defaultWidth/2;
-      renderables[i].targetHeight = renderables[i].defaultHeight/2;
+      renderables[i].targetWidth = imgWidth * smallFactor;
+      renderables[i].targetHeight = imgHeight *smallFactor;
     }
 
     renderables[i].targetX = xPos;
@@ -185,20 +210,20 @@ function canvasOnMouseWheel(event)
 
 function loadJSON(callback, file)
 {
-    var xobj = new XMLHttpRequest();
+  var xobj = new XMLHttpRequest();
 
-    xobj.overrideMimeType("application/json");
-    xobj.open('GET', file, true);
+  xobj.overrideMimeType("application/json");
+  xobj.open('GET', file, true);
 
-    xobj.onreadystatechange = function ()
+  xobj.onreadystatechange = function ()
+  {
+    if (xobj.readyState == 4 && xobj.status == "200")
     {
-      if (xobj.readyState == 4 && xobj.status == "200")
-      {
-        callback(xobj.responseText);
-      }
-    };
+      callback(xobj.responseText);
+    }
+  };
 
-    xobj.send(null);
+  xobj.send(null);
 }
 
 function getCurrentCluster()
@@ -234,8 +259,6 @@ function canvasMouseClick(event)
     }
   } else {
     // get element which is clicked
-
-    var childCluster;
     for (var i=0; i < renderables.length; i++)
     {
       // check bounds
@@ -251,10 +274,8 @@ function canvasMouseClick(event)
 
 function setTargetValuesOnClick(clicked)
 {
-  var scalingFactor = calculatedImgWidth / renderables[0].defaultWidth;
-
-  var imgWidth = renderables[0].defaultWidth * scalingFactor;
-  var imgHeight = renderables[0].defaultHeight * scalingFactor;
+  var imgWidth = renderables[0].defaultWidth * imgScalingFactor;
+  var imgHeight = renderables[0].defaultHeight * imgScalingFactor;
 
   var pileLeftPosX = 0;
   var pileRightPosX = canvas.width - imgWidth/2;
