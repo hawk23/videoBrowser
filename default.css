@@ -1,7 +1,7 @@
 div#container
 {
-  margin-left: 50px;
-  margin-top: 50px;
+  margin-left: 10px;
+  margin-top: 10px;
   position: relative;
   width: 854px;
 }
@@ -15,5 +15,10 @@ video#videoElement
 canvas#timeline
 {
   float: left;
-  margin-left: -20px;
+  background-color: black;
+}
+
+canvas#keyframeBrowser
+{
+  background-color: black;
 }

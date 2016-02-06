@@ -11,8 +11,6 @@ var RenderingEngine = function(canvas)
   this.interval = 1000 / this.fps;
   this.delta = 0;
 
-  this.canvas.style.backgroundColor = 'rgba(158, 167, 184, 0.2)';
-
   this.draw();
 }
 

@@ -3,6 +3,9 @@ var renderEngine;
 var canvas;
 var context;
 
+var yOffset = 105;
+var yOffsetPile = yOffset-80;
+
 var imgCount = 5; // of current level
 var paddingPileToCoverflow = 10;
 var pileImageDisplacement = 10;
@@ -11,7 +14,7 @@ var pileWidth;
 var xPosCoverflow;
 var lastClicked;
 var imgScalingFactor;
-
+var timeline;
 var currentApplicationState;
 
 window.onload = function()
@@ -39,24 +42,19 @@ function loaded(framesString)
   // create initial application state
   currentApplicationState = new ApplicationState(0,0,0,2);
 
-  // display initial application state
-  displayApplicationState(null, currentApplicationState);
-
-  init();
-}
-
-function init()
-{
   // init timeline
   var timelineCanvas = document.getElementById("timeline");
-  var timeline = new Timeline(timelineCanvas, 854, 596); // TODO
+  timeline = new Timeline(timelineCanvas, 814, 596); // TODO
+  
+  // display initial application state
+  displayApplicationState(null, currentApplicationState);
 }
 
 function buildRenderablesTree(images, renderEngine, targetCollection)
 {
   // crate image objects and set initial position
   var xPos = xPosCoverflow;
-  var yPos = 300;
+  var yPos = yOffset;
 
   for (var i=0; i < images.length; i++)
   {
@@ -75,7 +73,8 @@ function buildRenderablesTree(images, renderEngine, targetCollection)
       imageObj,
       images[i].width,
       images[i].height,
-      false);
+      false,
+      images[i]);
 
     targetCollection.push(renderable);
     renderEngine.addRenderable(renderable);
@@ -121,8 +120,22 @@ function displayApplicationState (before, after)
 
   displayCoverFlow(before, after);
   displayPiles(before, after);
+  displayTimeline(before, after);
 
   this.currentApplicationState = after;
+}
+
+function displayTimeline(before, after)
+{
+  var cluster = getCluster(after.level, after);
+
+  if (cluster != null && cluster.length > 0 && timeline != null)
+  {
+    var secondsFrom = cluster[0].item.time;
+    var secondsTo = cluster[cluster.length-1].item.time;
+
+    timeline.color(secondsFrom, secondsTo);
+  }
 }
 
 function displayZoom(before, after)
@@ -171,7 +184,7 @@ function displayZoom(before, after)
 function displayCoverFlow(before, after)
 {
   var xPos = xPosCoverflow;
-  var yPos = 300;
+  var yPos = yOffset;
 
   var cluster = getCluster(after.level, after);
 
@@ -239,12 +252,12 @@ function displayPiles(before, after)
   var pileLeftPosX = 0;
   var pileRightPosX = canvas.width - imgWidth/2;
 
-  var pileLeftPosY = 200;
-  var pileRightPosY = 200;
+  var pileLeftPosY = yOffsetPile;
+  var pileRightPosY = yOffsetPile;
 
   // center clicked image
   cluster[selectedParent].targetX = (canvas.width/2) - (imgWidth/2);
-  cluster[selectedParent].targetY = 200;
+  cluster[selectedParent].targetY = yOffsetPile;
   cluster[selectedParent].steps = 10;
   cluster[selectedParent].targetWidth = imgWidth;
   cluster[selectedParent].targetHeight = imgHeight;
@@ -294,6 +307,7 @@ function displayShift(before, after)
     cluster[i].targetWidth = cluster[i].defaultWidth * imgScalingFactor / 2;
     cluster[i].targetHeight = cluster[i].defaultHeight * imgScalingFactor / 2;
     cluster[i].targetOpacity = 0;
+    cluster[i].targetY = yOffsetPile;
 
     if (before.getParentItem() < after.getParentItem())
     {

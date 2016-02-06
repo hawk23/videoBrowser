@@ -26,9 +26,9 @@ Timeline.prototype.draw = function() {
 	// Fill the horizontal line
 	this.context.fillStyle = "#9ea7b8";
 	this.context.fillRect(this.widthPadding,0,this.widthTimeline,this.heightTimeline);
-	this.context.fillStyle = "black";
+	this.context.fillStyle = "white";
   this.context.font = "bold 13px Arial";
-  this.canvas.style.opacity = 0.7;
+  this.canvas.style.opacity = 1;
 
 	if (this.videoLength >= 600) {
 		this.timeRanges = 30;
@@ -50,6 +50,7 @@ Timeline.prototype.draw = function() {
 
 		// draw line to corresponding timestamp
 		this.context.beginPath();
+    this.context.strokeStyle = 'white';
 		this.context.moveTo(offset,0);
 		this.context.lineTo(offset,this.heightTimestampsLine);
 		this.context.stroke();
