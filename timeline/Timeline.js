@@ -42,7 +42,7 @@ Timeline.prototype.draw = function() {
 	// create the timestamp every 20 oder 30 seconds
 	var numTimestamps = this.videoLength / this.timeRanges;
 	this.timestampsOffset = this.widthTimeline / numTimestamps;
-	var offset = this.widthPadding; //TODO
+	var offset = this.widthPadding;
 	for (var timestamp=0; timestamp <= this.videoLength; timestamp += this.timeRanges) {
 
 		// write timestamp on timeline
