@@ -6,6 +6,8 @@ import java.util.List;
  */
 public class Frame {
     private int seconds;
+    private int secondsFrom;
+    private int secondsTo;
     private String file;
     private Segment bottomSegment;
 
@@ -21,7 +23,18 @@ public class Frame {
         this.seconds = seconds;
         this.file = file;
         bottomSegment = null;
+        secondsFrom = seconds;
+        secondsTo = seconds;
     }
+
+    public Frame(int seconds, int secondsFrom, int secondsTo, String file) {
+        this.seconds = seconds;
+        this.file = file;
+        bottomSegment = null;
+        this.secondsFrom = secondsFrom;
+        this.secondsTo = secondsTo;
+    }
+
 
     public int getSeconds() {
         return seconds;
@@ -29,6 +42,22 @@ public class Frame {
 
     public void setSeconds(int seconds) {
         this.seconds = seconds;
+    }
+
+    public int getSecondsFrom() {
+        return secondsFrom;
+    }
+
+    public void setSecondsFrom(int secondsFrom) {
+        this.secondsFrom = secondsFrom;
+    }
+
+    public int getSecondsTo() {
+        return secondsTo;
+    }
+
+    public void setSecondsTo(int secondsTo) {
+        this.secondsTo = secondsTo;
     }
 
     public String getFile() {

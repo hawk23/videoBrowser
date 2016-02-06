@@ -90,7 +90,11 @@ public class Main {
                     index = bottomSegment.getFrames().size() - 1;
                 }
                 Frame frame = bottomSegment.getFrames().get(index);
-                Frame frameCopy = new Frame(frame.getSeconds(), frame.getFile());
+                int time = frame.getSeconds();
+                int timeFrom = bottomSegment.getFrames().get(0).getSecondsFrom();
+                int timeTo = bottomSegment.getFrames().get(bottomSegment.getFrames().size() - 1).getSecondsTo();
+                Frame frameCopy = new Frame(time, timeFrom, timeTo, frame.getFile());
+
                 // add the whole segment to the list of childs
                 frameCopy.setBottomSegment(bottomSegment);
                 curSegment.getFrames().add(frameCopy);
@@ -149,7 +153,9 @@ public class Main {
         for (int j = 0; j < curSegment.getFrames().size(); j++) {
             Frame frame = curSegment.getFrames().get(j);
             builder.append("{");
-            builder.append("\"src\": \"" + frame.getFile() + "\", \"time\": " + frame.getSeconds() + ", \"width\": " + WIDTH + ", \"height\": " + HEIGHT + ", \"childs\": ");
+            builder.append("\"src\": \"" + frame.getFile() + "\", \"time\": " + frame.getSeconds() +  ", \"timeFrom\": "
+                    + frame.getSecondsFrom() +  ", \"timeTo\": " + frame.getSecondsTo()
+                    + ", \"width\": " + WIDTH + ", \"height\": " + HEIGHT + ", \"childs\": ");
             if (frame.getBottomSegment() == null) {
                 builder.append(" [ ] ");
             } else {
