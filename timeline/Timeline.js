@@ -4,7 +4,7 @@ var Timeline = function(canvas, widthTimeline, videoLength)
   this.context = this.canvas.getContext('2d');
 
   // constants
-  this.widthTimeline = 1500;
+  this.widthTimeline = widthTimeline;
   this.widthPadding = 20;
   this.widthCanvas = this.widthTimeline + 2*this.widthPadding;
   this.height = 40;

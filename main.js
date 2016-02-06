@@ -1,11 +1,5 @@
 var renderables = [];
 var renderEngine;
-var imagesLoaded = 0;
-var currentLevel = 0;
-var targetLevel = 0;
-var level0 = 0;
-var level1 = 0;
-var lastHovered = -1;
 var canvas;
 var context;
 
@@ -47,6 +41,15 @@ function loaded(framesString)
 
   // display initial application state
   displayApplicationState(null, currentApplicationState);
+
+  init();
+}
+
+function init()
+{
+  // init timeline
+  var timelineCanvas = document.getElementById("timeline");
+  var timeline = new Timeline(timelineCanvas, 854, 596); // TODO
 }
 
 function buildRenderablesTree(images, renderEngine, targetCollection)
@@ -111,9 +114,12 @@ function displayApplicationState (before, after)
     displayZoom(before, after);
   }
 
-  displayCoverFlow(before, after);
+  if (before != null && before.getParentItem() != after.getParentItem() && before.level == after.level)
+  {
+    displayShift(before, after);
+  }
 
-  // display piles
+  displayCoverFlow(before, after);
   displayPiles(before, after);
 
   this.currentApplicationState = after;
@@ -274,6 +280,29 @@ function displayPiles(before, after)
     pileRightPosY += pileImageDisplacement;
 
     cluster[i].steps = 10;
+  }
+}
+
+function displayShift(before, after)
+{
+  console.log("shift");
+  cluster = getCluster(before.level, before);
+
+  // shift cluster to one side
+  for (var i=0; i < cluster.length; i++)
+  {
+    cluster[i].targetWidth = cluster[i].defaultWidth * imgScalingFactor / 2;
+    cluster[i].targetHeight = cluster[i].defaultHeight * imgScalingFactor / 2;
+    cluster[i].targetOpacity = 0;
+
+    if (before.getParentItem() < after.getParentItem())
+    {
+      cluster[i].targetX = 0;
+    }
+    else
+    {
+      cluster[i].targetX = canvas.width;
+    }
   }
 }
 

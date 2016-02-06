@@ -1,0 +1,19 @@
+div#container
+{
+  margin-left: 50px;
+  margin-top: 50px;
+  position: relative;
+  width: 854px;
+}
+
+video#videoElement
+{
+  background-color: black;
+  float: left;
+}
+
+canvas#timeline
+{
+  float: left;
+  margin-left: -20px;
+}
