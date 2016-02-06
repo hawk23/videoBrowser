@@ -16,11 +16,12 @@ var calculatedImgWidth;
 var pileWidth;
 var xPosCoverflow;
 var lastClicked;
+var imgScalingFactor;
 
 window.onload = function()
 {
   loadJSON(loaded, './frames.json');
-}
+};
 
 function loaded(framesString)
 {
@@ -29,7 +30,7 @@ function loaded(framesString)
   context = canvas.getContext('2d');
 
   // calculate coverflow and pile areas depending on canvas width
-  calculatedImgWidth = (canvas.width - 2 * (imgCount - 1) * paddingPileToCoverflow -  2 * pileImageDisplacement) / (imgCount + 1);
+  calculatedImgWidth = (canvas.width - 2 * (imgCount - 1) * paddingPileToCoverflow -  2 * pileImageDisplacement) / (imgCount+1);
   pileWidth = (imgCount - 1) * pileImageDisplacement + calculatedImgWidth/2;
   xPosCoverflow = pileWidth + paddingPileToCoverflow;
 
@@ -54,9 +55,12 @@ function buildRenderablesTree(images, renderEngine, targetCollection)
     var imageObj = new Image();
     imageObj.src = "thumbnails/" + images[i].src;
 
+    if (!imgScalingFactor) {
+      imgScalingFactor = calculatedImgWidth / images[i].width;
+    }
     var renderable = new Renderable(
-      images[i].width/2,
-      images[i].height/2,
+      images[i].width * imgScalingFactor,
+      images[i].height * imgScalingFactor,
       xPos,
       yPos - images[i].height/2,
       1,
@@ -75,6 +79,7 @@ function buildRenderablesTree(images, renderEngine, targetCollection)
       buildRenderablesTree(images[i].childs, renderEngine, renderable.childs)
     }
   }
+
 }
 
 function addEventlistener(canvas)
@@ -98,24 +103,44 @@ function setTargetValuesCoverFlow(hovered)
 {
   var xPos = xPosCoverflow;
   var yPos = 300;
+
   var cluster = getCurrentCluster();
+
+  var imgWidth = cluster[0].defaultWidth * imgScalingFactor;
+  var imgHeight = cluster[0].defaultHeight * imgScalingFactor;
+
+  var bigFactor;
+  var middleFactor;
+  var smallFactor;
+
+  if (hovered === cluster.length - 1 || hovered === 0)
+  {
+    //xPos += calculatedImgWidth / 4;
+    bigFactor = 1.5;
+    middleFactor = 1;
+    smallFactor = 2.5 / (cluster.length - 2);
+  } else {
+    bigFactor = 1.5;
+    middleFactor = 1;
+    smallFactor = 1.5 / (cluster.length - 3);
+  }
 
   for(var i=0; i < cluster.length; i++)
   {
     if (i == hovered)
     {
-      cluster[i].targetWidth = cluster[i].defaultWidth;
-      cluster[i].targetHeight = cluster[i].defaultHeight;
+      cluster[i].targetWidth = imgWidth * bigFactor;
+      cluster[i].targetHeight = imgHeight * bigFactor;
     }
     else if (i == hovered - 1 || i == hovered + 1)
     {
-      cluster[i].targetWidth = cluster[i].defaultWidth/1.5;
-      cluster[i].targetHeight = cluster[i].defaultHeight/1.5;
+      cluster[i].targetWidth = imgWidth * middleFactor;
+      cluster[i].targetHeight = imgHeight * middleFactor;
     }
     else
     {
-      cluster[i].targetWidth = cluster[i].defaultWidth/2;
-      cluster[i].targetHeight = cluster[i].defaultHeight/2;
+      cluster[i].targetWidth = imgWidth * smallFactor;
+      cluster[i].targetHeight = imgHeight *smallFactor;
     }
 
     cluster[i].targetX = xPos;
@@ -202,20 +227,20 @@ function canvasOnMouseWheel(event)
 
 function loadJSON(callback, file)
 {
-    var xobj = new XMLHttpRequest();
+  var xobj = new XMLHttpRequest();
 
-    xobj.overrideMimeType("application/json");
-    xobj.open('GET', file, true);
+  xobj.overrideMimeType("application/json");
+  xobj.open('GET', file, true);
 
-    xobj.onreadystatechange = function ()
+  xobj.onreadystatechange = function ()
+  {
+    if (xobj.readyState == 4 && xobj.status == "200")
     {
-      if (xobj.readyState == 4 && xobj.status == "200")
-      {
-        callback(xobj.responseText);
-      }
-    };
+      callback(xobj.responseText);
+    }
+  };
 
-    xobj.send(null);
+  xobj.send(null);
 }
 
 function getCurrentCluster()
@@ -269,10 +294,9 @@ function canvasMouseClick(event)
 function setTargetValuesOnClick(clicked)
 {
   var cluster = getCurrentCluster();
-  var scalingFactor = calculatedImgWidth / cluster[0].defaultWidth;
 
-  var imgWidth = cluster[0].defaultWidth * scalingFactor;
-  var imgHeight = cluster[0].defaultHeight * scalingFactor;
+  var imgWidth = cluster[0].defaultWidth * imgScalingFactor;
+  var imgHeight = cluster[0].defaultHeight * imgScalingFactor;
 
   var pileLeftPosX = 0;
   var pileRightPosX = canvas.width - imgWidth/2;
