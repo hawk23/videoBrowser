@@ -129,6 +129,8 @@ function getHovered(event)
       return i;
     }
   }
+
+  return -1;
 }
 
 function canvasMouseMove(event)
@@ -141,7 +143,7 @@ function canvasMouseMove(event)
 
   var hovered = getHovered(event);
 
-  if (lastHovered != hovered)
+  if (lastHovered != hovered && hovered != -1)
   {
     lastHovered = hovered;
     setTargetValues(hovered);

@@ -18,4 +18,6 @@ var Renderable = function(currWidth, currHeight, currX, currY, currOpacity, imag
 
   this.defaultWidth = defaultWidth;
   this.defaultHeight = defaultHeight;
+
+  this.childs = [];
 }

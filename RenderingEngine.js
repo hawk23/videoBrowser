@@ -11,6 +11,8 @@ var RenderingEngine = function(canvas)
   this.interval = 1000 / this.fps;
   this.delta = 0;
 
+  this.canvas.style.backgroundColor = 'rgba(158, 167, 184, 0.2)';
+
   this.draw();
 }
 
@@ -84,7 +86,7 @@ RenderingEngine.prototype.getAnimationStep = function(curr, target, renderable)
   var diff = target - curr;
   var step = diff / renderable.steps;
 
-  // image.steps = Math.max(1, image.steps-1);
+  // renderable.steps = Math.max(1, renderable.steps-1);
 
   return step;
 }
