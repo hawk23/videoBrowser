@@ -14,8 +14,10 @@ video#videoElement
 
 canvas#timeline
 {
-  float: left;
   background-color: black;
+  position: absolute;
+  left: 0px;
+  top: 450px;
 }
 
 canvas#keyframeBrowser
@@ -23,5 +25,5 @@ canvas#keyframeBrowser
   background-color: none;
   position: absolute;
   left: 0px;
-  top: 380px;
+  top: 350px;
 }

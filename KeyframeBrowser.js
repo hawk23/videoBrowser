@@ -389,6 +389,12 @@ KeyframeBrowser.prototype.canvasMouseMove = function(event)
 
     this.displayApplicationState(this.currentApplicationState, afterState);
   }
+
+  this.onmousemove(event);
+}
+
+KeyframeBrowser.prototype.onmousemove = function(event)
+{
 }
 
 KeyframeBrowser.prototype.canvasOnMouseWheel = function(event)
@@ -396,15 +402,18 @@ KeyframeBrowser.prototype.canvasOnMouseWheel = function(event)
   var hovered = this.getHovered(event);
   var afterState = this.currentApplicationState.clone();
 
-  if (event.deltaY < 0 && this.currentApplicationState.level < 2)
+  if (hovered != -1)
   {
-    afterState.zoomIn(hovered);
-    this.displayApplicationState(this.currentApplicationState, afterState);
-  }
-  else if (event.deltaY > 0 && this.currentApplicationState.level > 0)
-  {
-    afterState.zoomOut();
-    this.displayApplicationState(this.currentApplicationState, afterState);
+    if (event.deltaY < 0 && this.currentApplicationState.level < 2)
+    {
+      afterState.zoomIn(hovered);
+      this.displayApplicationState(this.currentApplicationState, afterState);
+    }
+    else if (event.deltaY > 0 && this.currentApplicationState.level > 0)
+    {
+      afterState.zoomOut();
+      this.displayApplicationState(this.currentApplicationState, afterState);
+    }
   }
 
   event.preventDefault();
@@ -459,4 +468,9 @@ KeyframeBrowser.prototype.getHovered = function(event)
   }
 
   return -1;
+}
+
+KeyframeBrowser.prototype.show = function(show)
+{
+  this.canvas.style.opacity = show ? 1 : 0;
 }

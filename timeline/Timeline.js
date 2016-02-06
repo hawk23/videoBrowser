@@ -7,10 +7,10 @@ var Timeline = function(canvas, widthTimeline, videoLength)
   this.widthTimeline = widthTimeline;
   this.widthPadding = 20;
   this.widthCanvas = this.widthTimeline + 2*this.widthPadding;
-  this.height = 40;
-  this.heightTimeline = this.height / 4;
+  this.height = 30;
+  this.heightTimeline = Math.round(this.height / 4);
   this.videoLength = videoLength;
-  this.heightTimestampsLine = 20;
+  this.heightTimestampsLine = 15;
 
   // global variables
   this.timeRanges;
@@ -27,7 +27,7 @@ Timeline.prototype.draw = function() {
 	this.context.fillStyle = "#9ea7b8";
 	this.context.fillRect(this.widthPadding,0,this.widthTimeline,this.heightTimeline);
 	this.context.fillStyle = "white";
-  this.context.font = "bold 13px Arial";
+  this.context.font = "11px Arial";
   this.canvas.style.opacity = 1;
 
 	if (this.videoLength >= 500) {
@@ -46,7 +46,7 @@ Timeline.prototype.draw = function() {
 	for (var timestamp=0; timestamp <= this.videoLength; timestamp += this.timeRanges) {
 
 		// write timestamp on timeline
-		this.context.fillText(timestamp.toMMSS(), offset - 10, this.height/3 + 20);
+		this.context.fillText(timestamp.toMMSS(), offset - 10, this.height/3 + 15);
 
 		// draw line to corresponding timestamp
 		this.context.beginPath();
@@ -66,7 +66,7 @@ Timeline.prototype.draw = function() {
 	}
 
   // lastTimestamp
-	this.context.fillText(this.videoLength.toMMSS(), (this.widthTimeline + this.widthPadding) - 10, this.height/3 + 20);
+	this.context.fillText(this.videoLength.toMMSS(), (this.widthTimeline + this.widthPadding) - 10, this.height/3 + 15);
 
   // last line to corresponding timestamp
   this.context.beginPath();
@@ -99,4 +99,9 @@ Number.prototype.toMMSS = function () {
     if (seconds < 10) {seconds = "0"+seconds;}
     var time = minutes+':'+seconds;
     return time;
+}
+
+Timeline.prototype.show = function(show)
+{
+  this.canvas.style.opacity = show ? 1 : 0;
 }
