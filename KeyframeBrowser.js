@@ -17,6 +17,7 @@ var KeyframeBrowser = function(startPlaybackCallback, displayRangeCallback)
   this.xPosCoverflow;
   this.imgScalingFactor;
   this.currentApplicationState;
+  this.defaultSteps = 10;
 
   this.loadJSON(this.loaded.bind(this), './frames.json');
 }
@@ -109,7 +110,7 @@ KeyframeBrowser.prototype.displayApplicationState = function(before, after)
       for (var i=0; i<oldCluster.length; i++)
       {
         oldCluster[i].targetOpacity = 0;
-        oldCluster[i].steps = 10;
+        oldCluster[i].steps = this.defaultSteps;
       }
     }
 
@@ -150,7 +151,7 @@ KeyframeBrowser.prototype.displayZoom = function(before, after)
     var cluster = this.getCluster(before.level, before);
 
     cluster[after.getParentItem()].targetOpacity = 0;
-    cluster[after.getParentItem()].steps = 10;
+    cluster[after.getParentItem()].steps = this.defaultSteps;
 
     // center all images of next cluster to get nice zoom in animation
     var nextCluster = this.getCluster(after.level, after);
@@ -163,23 +164,24 @@ KeyframeBrowser.prototype.displayZoom = function(before, after)
       nextCluster[i].currY = cluster[after.getParentItem()].currY;
     }
   }
+  // zoom out
   else if (before.level > after.level)
   {
     // fade in selected item from parent cluster
     var cluster = this.getCluster(after.level, after);
 
     cluster[after.hovered].currOpacity = 0;
-    cluster[after.hovered].steps = 10;
+    cluster[after.hovered].steps = this.defaultSteps;
 
     // fade out last cluster
     var lastCluster = this.getCluster(before.level, before);
     for (var i=0; i < lastCluster.length; i++)
     {
       lastCluster[i].targetOpacity = 0;
-      lastCluster[i].targWidth = cluster[after.hovered].currWidth;
-      lastCluster[i].targetHeight = cluster[after.hovered].currHeight;
-      lastCluster[i].targetX = cluster[after.hovered].currX;
-      lastCluster[i].targetY = cluster[after.hovered].currY;
+      lastCluster[i].targWidth = lastCluster[before.hovered].currWidth;
+      lastCluster[i].targetHeight = lastCluster[before.hovered].currHeight;
+      lastCluster[i].targetX = lastCluster[before.hovered].currX;
+      lastCluster[i].targetY = lastCluster[before.hovered].currY;
     }
   }
 }
@@ -230,7 +232,7 @@ KeyframeBrowser.prototype.displayCoverFlow = function(before, after)
 
     cluster[i].targetX = xPos;
     cluster[i].targetY = yPos - cluster[i].targetHeight;
-    cluster[i].steps = 10;
+    cluster[i].steps = this.defaultSteps;
     cluster[i].visible = true;
     cluster[i].targetOpacity = 1;
 
@@ -261,7 +263,7 @@ KeyframeBrowser.prototype.displayPiles = function(before, after)
   // center clicked image
   cluster[selectedParent].targetX = (this.canvas.width/2) - (imgWidth/2);
   cluster[selectedParent].targetY = this.yOffsetPile;
-  cluster[selectedParent].steps = 10;
+  cluster[selectedParent].steps = this.defaultSteps;
   cluster[selectedParent].targetWidth = imgWidth;
   cluster[selectedParent].targetHeight = imgHeight;
   cluster[selectedParent].targetOpacity = 0;
@@ -279,7 +281,7 @@ KeyframeBrowser.prototype.displayPiles = function(before, after)
     pileLeftPosX += this.pileImageDisplacement;
     pileLeftPosY += this.pileImageDisplacement;
 
-    cluster[i].steps = 10;
+    cluster[i].steps = this.defaultSteps;
   }
 
   // pile renderables right from selectedParent on right side
@@ -295,12 +297,14 @@ KeyframeBrowser.prototype.displayPiles = function(before, after)
     pileRightPosX -= this.pileImageDisplacement;
     pileRightPosY += this.pileImageDisplacement;
 
-    cluster[i].steps = 10;
+    cluster[i].steps = this.defaultSteps;
   }
 }
 
 KeyframeBrowser.prototype.displayShift = function(before, after)
 {
+  console.log("displayShift");
+
   cluster = this.getCluster(before.level, before);
 
   // shift cluster to one side
@@ -363,16 +367,16 @@ KeyframeBrowser.prototype.canvasOnMouseWheel = function(event)
   var hovered = this.getHovered(event);
   var afterState = this.currentApplicationState.clone();
 
-  if (event.deltaY < 0)
+  if (event.deltaY < 0 && this.currentApplicationState.level < 2)
   {
     afterState.zoomIn(hovered);
+    this.displayApplicationState(this.currentApplicationState, afterState);
   }
-  else
+  else if (event.deltaY > 0 && this.currentApplicationState.level > 0)
   {
     afterState.zoomOut();
+    this.displayApplicationState(this.currentApplicationState, afterState);
   }
-
-  this.displayApplicationState(this.currentApplicationState, afterState);
 
   event.preventDefault();
 }

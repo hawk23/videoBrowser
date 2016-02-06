@@ -12,7 +12,7 @@ var MainApplication = function()
 MainApplication.prototype.startPlayback = function(time)
 {
 	this.video.currentTime = time;
-  this.video.play();
+  this.play();
 }
 
 MainApplication.prototype.displayRange = function(from, to)
@@ -24,14 +24,24 @@ MainApplication.prototype.playPauseToggle = function()
 {
   if (!this.isPlaying)
   {
-    this.video.play();
+    this.play();
   }
   else
   {
-    this.video.pause();
+    this.pause();
   }
+}
 
-  this.isPlaying = !this.isPlaying;
+MainApplication.prototype.play = function()
+{
+  this.video.play();
+  this.isPlaying = true;
+}
+
+MainApplication.prototype.pause = function()
+{
+  this.video.pause();
+  this.isPlaying = false;
 }
 
 window.onload = function()
