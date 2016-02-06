@@ -110,6 +110,17 @@ function displayApplicationState (before, after)
 {
   if (before != null && before.level != after.level)
   {
+
+    // fade out piles from higher levels
+    if (after.level >= 2) {
+      var oldCluster = getCluster(after.level - 2, before);
+      for (var i=0; i<oldCluster.length; i++)
+      {
+        oldCluster[i].targetOpacity = 0;
+        oldCluster[i].steps = 10;
+      }
+    }
+
     displayZoom(before, after);
   }
 
