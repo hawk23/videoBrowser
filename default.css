@@ -1,0 +1,27 @@
+div#container
+{
+  margin-left: 10px;
+  margin-top: 10px;
+  position: relative;
+  width: 854px;
+}
+
+video#videoElement
+{
+  background-color: black;
+  float: left;
+}
+
+canvas#timeline
+{
+  float: left;
+  background-color: black;
+}
+
+canvas#keyframeBrowser
+{
+  background-color: none;
+  position: absolute;
+  left: 0px;
+  top: 380px;
+}

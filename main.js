@@ -1,13 +1,10 @@
 var renderables = [];
 var renderEngine;
-var imagesLoaded = 0;
-var currentLevel = 0;
-var targetLevel = 0;
-var level0 = 0;
-var level1 = 0;
-var lastHovered = -1;
 var canvas;
 var context;
+
+var yOffset = 105;
+var yOffsetPile = yOffset-80;
 
 var imgCount = 5; // of current level
 var paddingPileToCoverflow = 10;
@@ -17,7 +14,7 @@ var pileWidth;
 var xPosCoverflow;
 var lastClicked;
 var imgScalingFactor;
-
+var timeline;
 var currentApplicationState;
 
 window.onload = function()
@@ -45,6 +42,10 @@ function loaded(framesString)
   // create initial application state
   currentApplicationState = new ApplicationState(0,0,0,2);
 
+  // init timeline
+  var timelineCanvas = document.getElementById("timeline");
+  timeline = new Timeline(timelineCanvas, 814, 596); // TODO
+  
   // display initial application state
   displayApplicationState(null, currentApplicationState);
 }
@@ -53,7 +54,7 @@ function buildRenderablesTree(images, renderEngine, targetCollection)
 {
   // crate image objects and set initial position
   var xPos = xPosCoverflow;
-  var yPos = 300;
+  var yPos = yOffset;
 
   for (var i=0; i < images.length; i++)
   {
@@ -72,7 +73,8 @@ function buildRenderablesTree(images, renderEngine, targetCollection)
       imageObj,
       images[i].width,
       images[i].height,
-      false);
+      false,
+      images[i]);
 
     targetCollection.push(renderable);
     renderEngine.addRenderable(renderable);
@@ -108,15 +110,43 @@ function displayApplicationState (before, after)
 {
   if (before != null && before.level != after.level)
   {
+
+    // fade out piles from higher levels
+    if (after.level >= 2) {
+      var oldCluster = getCluster(after.level - 2, before);
+      for (var i=0; i<oldCluster.length; i++)
+      {
+        oldCluster[i].targetOpacity = 0;
+        oldCluster[i].steps = 10;
+      }
+    }
+
     displayZoom(before, after);
   }
 
-  displayCoverFlow(before, after);
+  if (before != null && before.getParentItem() != after.getParentItem() && before.level == after.level)
+  {
+    displayShift(before, after);
+  }
 
-  // display piles
+  displayCoverFlow(before, after);
   displayPiles(before, after);
+  displayTimeline(before, after);
 
   this.currentApplicationState = after;
+}
+
+function displayTimeline(before, after)
+{
+  var cluster = getCluster(after.level, after);
+
+  if (cluster != null && cluster.length > 0 && timeline != null)
+  {
+    var secondsFrom = cluster[0].item.time;
+    var secondsTo = cluster[cluster.length-1].item.time;
+
+    timeline.color(secondsFrom, secondsTo);
+  }
 }
 
 function displayZoom(before, after)
@@ -165,7 +195,7 @@ function displayZoom(before, after)
 function displayCoverFlow(before, after)
 {
   var xPos = xPosCoverflow;
-  var yPos = 300;
+  var yPos = yOffset;
 
   var cluster = getCluster(after.level, after);
 
@@ -233,12 +263,12 @@ function displayPiles(before, after)
   var pileLeftPosX = 0;
   var pileRightPosX = canvas.width - imgWidth/2;
 
-  var pileLeftPosY = 200;
-  var pileRightPosY = 200;
+  var pileLeftPosY = yOffsetPile;
+  var pileRightPosY = yOffsetPile;
 
   // center clicked image
   cluster[selectedParent].targetX = (canvas.width/2) - (imgWidth/2);
-  cluster[selectedParent].targetY = 200;
+  cluster[selectedParent].targetY = yOffsetPile;
   cluster[selectedParent].steps = 10;
   cluster[selectedParent].targetWidth = imgWidth;
   cluster[selectedParent].targetHeight = imgHeight;
@@ -274,6 +304,30 @@ function displayPiles(before, after)
     pileRightPosY += pileImageDisplacement;
 
     cluster[i].steps = 10;
+  }
+}
+
+function displayShift(before, after)
+{
+  console.log("shift");
+  cluster = getCluster(before.level, before);
+
+  // shift cluster to one side
+  for (var i=0; i < cluster.length; i++)
+  {
+    cluster[i].targetWidth = cluster[i].defaultWidth * imgScalingFactor / 2;
+    cluster[i].targetHeight = cluster[i].defaultHeight * imgScalingFactor / 2;
+    cluster[i].targetOpacity = 0;
+    cluster[i].targetY = yOffsetPile;
+
+    if (before.getParentItem() < after.getParentItem())
+    {
+      cluster[i].targetX = 0;
+    }
+    else
+    {
+      cluster[i].targetX = canvas.width;
+    }
   }
 }
 
@@ -351,6 +405,26 @@ function canvasMouseClick(event)
 
     displayApplicationState(currentApplicationState, afterState);
   }
+  else
+  {
+    // check if item was clicked for playback
+    var hovered = getHovered(event);
+
+    if (hovered != -1)
+    {
+      var cluster = getCluster(currentApplicationState.level, currentApplicationState);
+      var playbackTime = cluster[hovered].item.time;
+
+      play(playbackTime);
+    }
+  }
+}
+
+function play(time)
+{
+  var video = document.getElementsByTagName("video")[0];
+	video.currentTime = time;
+  video.play();
 }
 
 function getHovered(event)
