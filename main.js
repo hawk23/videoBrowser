@@ -98,46 +98,50 @@ function setTargetValuesCoverFlow(hovered)
 {
   var xPos = xPosCoverflow;
   var yPos = 300;
+  var cluster = getCurrentCluster();
 
-  for(var i=0; i < renderables.length; i++)
+  for(var i=0; i < cluster.length; i++)
   {
     if (i == hovered)
     {
-      renderables[i].targetWidth = renderables[i].defaultWidth;
-      renderables[i].targetHeight = renderables[i].defaultHeight;
+      cluster[i].targetWidth = cluster[i].defaultWidth;
+      cluster[i].targetHeight = cluster[i].defaultHeight;
     }
     else if (i == hovered - 1 || i == hovered + 1)
     {
-      renderables[i].targetWidth = renderables[i].defaultWidth/1.5;
-      renderables[i].targetHeight = renderables[i].defaultHeight/1.5;
+      cluster[i].targetWidth = cluster[i].defaultWidth/1.5;
+      cluster[i].targetHeight = cluster[i].defaultHeight/1.5;
     }
     else
     {
-      renderables[i].targetWidth = renderables[i].defaultWidth/2;
-      renderables[i].targetHeight = renderables[i].defaultHeight/2;
+      cluster[i].targetWidth = cluster[i].defaultWidth/2;
+      cluster[i].targetHeight = cluster[i].defaultHeight/2;
     }
 
-    renderables[i].targetX = xPos;
-    renderables[i].targetY = yPos - renderables[i].targetHeight;
-    renderables[i].steps = 10;
-    renderables[i].visible = true;
+    cluster[i].targetX = xPos;
+    cluster[i].targetY = yPos - cluster[i].targetHeight;
+    cluster[i].steps = 10;
+    cluster[i].visible = true;
 
-    xPos += renderables[i].targetWidth;
+    xPos += cluster[i].targetWidth;
   }
 }
 
 function setTargetValuesZoom()
 {
-  // TODO
+  // hide hovered element and display next levels clusters
+  var cluster = getCurrentCluster();
 }
 
 function getHovered(event)
 {
+  var cluster = getCurrentCluster();
+
   // get element which is hovered
-  for (var i=0; i < renderables.length; i++)
+  for (var i=0; i < cluster.length; i++)
   {
     // check bounds
-    if (renderables[i].currX <= event.clientX && renderables[i].currX + renderables[i].currWidth >= event.clientX)
+    if (cluster[i].currX <= event.clientX && cluster[i].currX + cluster[i].currWidth >= event.clientX)
     {
       return i;
     }
@@ -248,11 +252,11 @@ function canvasMouseClick(event)
   } else {
     // get element which is clicked
 
-    var childCluster;
-    for (var i=0; i < renderables.length; i++)
+    var cluster = getCurrentCluster();
+    for (var i=0; i < cluster.length; i++)
     {
       // check bounds
-      if (renderables[i].currX <= event.clientX && renderables[i].currX + renderables[i].currWidth >= event.clientX)
+      if (cluster[i].currX <= event.clientX && cluster[i].currX + cluster[i].currWidth >= event.clientX)
       {
         lastClicked = i;
         setTargetValuesOnClick(i);
@@ -264,10 +268,11 @@ function canvasMouseClick(event)
 
 function setTargetValuesOnClick(clicked)
 {
-  var scalingFactor = calculatedImgWidth / renderables[0].defaultWidth;
+  var cluster = getCurrentCluster();
+  var scalingFactor = calculatedImgWidth / cluster[0].defaultWidth;
 
-  var imgWidth = renderables[0].defaultWidth * scalingFactor;
-  var imgHeight = renderables[0].defaultHeight * scalingFactor;
+  var imgWidth = cluster[0].defaultWidth * scalingFactor;
+  var imgHeight = cluster[0].defaultHeight * scalingFactor;
 
   var pileLeftPosX = 0;
   var pileRightPosX = canvas.width - imgWidth/2;
@@ -276,39 +281,39 @@ function setTargetValuesOnClick(clicked)
   var pileRightPosY = 200;
 
   // center clicked image
-  renderables[clicked].targetX = (canvas.width/2) - (imgWidth/2);
-  renderables[clicked].targetY = 200;
-  renderables[clicked].steps = 10;
-  renderables[clicked].targetWidth = imgWidth;
-  renderables[clicked].targetHeight = imgHeight;
+  cluster[clicked].targetX = (canvas.width/2) - (imgWidth/2);
+  cluster[clicked].targetY = 200;
+  cluster[clicked].steps = 10;
+  cluster[clicked].targetWidth = imgWidth;
+  cluster[clicked].targetHeight = imgHeight;
 
   // pile renderables left from clicked on left side
   for(var i=0; i < clicked; i++)
   {
-    renderables[i].targetX = pileLeftPosX;
-    renderables[i].targetY = pileLeftPosY;
-    renderables[i].targetWidth = imgWidth/2;
-    renderables[i].targetHeight = imgHeight/2;
-    renderables[i].currZ = 1 + i;
+    cluster[i].targetX = pileLeftPosX;
+    cluster[i].targetY = pileLeftPosY;
+    cluster[i].targetWidth = imgWidth/2;
+    cluster[i].targetHeight = imgHeight/2;
+    cluster[i].currZ = 1 + i;
 
     pileLeftPosX += pileImageDisplacement;
     pileLeftPosY += pileImageDisplacement;
 
-    renderables[i].steps = 10;
+    cluster[i].steps = 10;
   }
 
   // pile renderables right from clicked on right side
-  for (var i=renderables.length-1; i > clicked; i--)
+  for (var i=cluster.length-1; i > clicked; i--)
   {
-    renderables[i].targetX = pileRightPosX;
-    renderables[i].targetY = pileRightPosY;
-    renderables[i].targetWidth = imgWidth/2;
-    renderables[i].targetHeight = imgHeight/2;
-    renderables[i].currZ = 1000 - i;
+    cluster[i].targetX = pileRightPosX;
+    cluster[i].targetY = pileRightPosY;
+    cluster[i].targetWidth = imgWidth/2;
+    cluster[i].targetHeight = imgHeight/2;
+    cluster[i].currZ = 1000 - i;
 
     pileRightPosX -= pileImageDisplacement;
     pileRightPosY += pileImageDisplacement;
 
-    renderables[i].steps = 10;
+    cluster[i].steps = 10;
   }
 }
