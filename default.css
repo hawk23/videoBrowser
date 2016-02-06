@@ -20,5 +20,8 @@ canvas#timeline
 
 canvas#keyframeBrowser
 {
-  background-color: black;
+  background-color: none;
+  position: absolute;
+  left: 0px;
+  top: 380px;
 }

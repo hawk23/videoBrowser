@@ -30,7 +30,7 @@ Timeline.prototype.draw = function() {
   this.context.font = "bold 13px Arial";
   this.canvas.style.opacity = 1;
 
-	if (this.videoLength >= 600) {
+	if (this.videoLength >= 500) {
 		this.timeRanges = 30;
 	} else {
 		this.timeRanges = 20;

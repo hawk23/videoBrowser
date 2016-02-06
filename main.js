@@ -394,6 +394,26 @@ function canvasMouseClick(event)
 
     displayApplicationState(currentApplicationState, afterState);
   }
+  else
+  {
+    // check if item was clicked for playback
+    var hovered = getHovered(event);
+
+    if (hovered != -1)
+    {
+      var cluster = getCluster(currentApplicationState.level, currentApplicationState);
+      var playbackTime = cluster[hovered].item.time;
+
+      play(playbackTime);
+    }
+  }
+}
+
+function play(time)
+{
+  var video = document.getElementsByTagName("video")[0];
+	video.currentTime = time;
+  video.play();
 }
 
 function getHovered(event)

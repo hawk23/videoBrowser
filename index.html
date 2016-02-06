@@ -1,5 +1,6 @@
 <html>
   <head>
+
     <script type="text/javascript" src="main.js"></script>
     <script type="text/javascript" src="Renderable.js"></script>
     <script type="text/javascript" src="RenderingEngine.js"></script>
@@ -11,13 +12,17 @@
   </head>
   <body>
     <div id="container">
-      <video width="854" height="480" controls id="videoElement">
+      <video width="854" height="480" id="videoElement">
         <source src="media/bunny.mp4" type="video/mp4">
         <source src="media/bunny.ogg" type="video/ogg">
         <source src="media/bunny.webm" type="video/webm">
         Your browser does not support HTML5 video.
       </video>
-
+      <!--
+      <div id="controls">
+        <button type="button" id="play-pause">Play</button>
+      </div>
+      -->
       <canvas id="keyframeBrowser" width="854" height="100"></canvas>
       <canvas id="timeline"></canvas>
     </div>
