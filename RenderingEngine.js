@@ -74,7 +74,16 @@ RenderingEngine.prototype.render = function()
   for (var i=0; i < renderingOrder.length; i++)
   {
     nextIdx = renderingOrder[i].index;
-    this.context.drawImage(this.renderables[nextIdx].image, this.renderables[nextIdx].currX, this.renderables[nextIdx].currY, this.renderables[nextIdx].currWidth, this.renderables[nextIdx].currHeight);
+
+    if (this.renderables[nextIdx].visible)
+    {
+      this.context.drawImage(
+        this.renderables[nextIdx].image,
+        this.renderables[nextIdx].currX,
+        this.renderables[nextIdx].currY,
+        this.renderables[nextIdx].currWidth,
+        this.renderables[nextIdx].currHeight);
+    }
   }
 }
 

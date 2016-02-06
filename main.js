@@ -35,9 +35,17 @@ function loaded(framesString)
   xPosCoverflow = pileWidth + paddingPileToCoverflow;
 
   renderEngine = new RenderingEngine(canvas);
+  renderables = [];
 
+  buildRenderablesTree(images, renderEngine, renderables);
   addEventlistener(canvas);
 
+  // display top level cluster
+  setTargetValues(2);
+}
+
+function buildRenderablesTree(images, renderEngine, targetCollection)
+{
   // crate image objects and set initial position
   var xPos = xPosCoverflow;
   var yPos = 300;
@@ -45,18 +53,31 @@ function loaded(framesString)
   for (var i=0; i < images.length; i++)
   {
     var imageObj = new Image();
-    imageObj.onload = imageloaded;
     imageObj.src = "thumbnails/" + images[i].src;
 
     if (!imgScalingFactor) {
       imgScalingFactor = calculatedImgWidth / images[i].width;
     }
+    var renderable = new Renderable(
+      images[i].width * imgScalingFactor,
+      images[i].height * imgScalingFactor,
+      xPos,
+      yPos - images[i].height/2,
+      1,
+      imageObj,
+      images[i].width,
+      images[i].height,
+      false);
 
-    var renderable = new Renderable(images[i].width * imgScalingFactor, images[i].height * imgScalingFactor, xPos, yPos - images[i].height/2, 1, imageObj, images[i].width, images[i].height);
-    renderables.push(renderable);
+    targetCollection.push(renderable);
     renderEngine.addRenderable(renderable);
 
     xPos += images[i].width/2;
+
+    if (images[i].hasOwnProperty("childs") && images[i].childs.length > 0)
+    {
+      buildRenderablesTree(images[i].childs, renderEngine, renderable.childs)
+    }
   }
 
 }
@@ -66,16 +87,6 @@ function addEventlistener(canvas)
   canvas.onmousemove = canvasMouseMove;
   canvas.onmousewheel = canvasOnMouseWheel;
   canvas.onmouseup = canvasMouseClick;
-}
-
-function imageloaded ()
-{
-  imagesLoaded++;
-
-  if (imagesLoaded == renderables.length)
-  {
-    // nothing to do here for now
-  }
 }
 
 function setTargetValues(hovered)
@@ -93,63 +104,69 @@ function setTargetValuesCoverFlow(hovered)
   var xPos = xPosCoverflow;
   var yPos = 300;
 
-  var imgWidth = renderables[0].defaultWidth * imgScalingFactor;
-  var imgHeight = renderables[0].defaultHeight * imgScalingFactor;
+  var cluster = getCurrentCluster();
+
+  var imgWidth = cluster[0].defaultWidth * imgScalingFactor;
+  var imgHeight = cluster[0].defaultHeight * imgScalingFactor;
 
   var bigFactor;
   var middleFactor;
   var smallFactor;
 
-  if (hovered === renderables.length - 1 || hovered === 0)
+  if (hovered === cluster.length - 1 || hovered === 0)
   {
     //xPos += calculatedImgWidth / 4;
     bigFactor = 1.5;
     middleFactor = 1;
-    smallFactor = 2.5 / (renderables.length - 2);
+    smallFactor = 2.5 / (cluster.length - 2);
   } else {
     bigFactor = 1.5;
     middleFactor = 1;
-    smallFactor = 1.5 / (renderables.length - 3);
+    smallFactor = 1.5 / (cluster.length - 3);
   }
 
-  for(var i=0; i < renderables.length; i++)
+  for(var i=0; i < cluster.length; i++)
   {
     if (i == hovered)
     {
-      renderables[i].targetWidth = imgWidth * bigFactor;
-      renderables[i].targetHeight = imgHeight * bigFactor;
+      cluster[i].targetWidth = imgWidth * bigFactor;
+      cluster[i].targetHeight = imgHeight * bigFactor;
     }
     else if (i == hovered - 1 || i == hovered + 1)
     {
-      renderables[i].targetWidth = imgWidth * middleFactor;
-      renderables[i].targetHeight = imgHeight * middleFactor;
+      cluster[i].targetWidth = imgWidth * middleFactor;
+      cluster[i].targetHeight = imgHeight * middleFactor;
     }
     else
     {
-      renderables[i].targetWidth = imgWidth * smallFactor;
-      renderables[i].targetHeight = imgHeight *smallFactor;
+      cluster[i].targetWidth = imgWidth * smallFactor;
+      cluster[i].targetHeight = imgHeight *smallFactor;
     }
 
-    renderables[i].targetX = xPos;
-    renderables[i].targetY = yPos - renderables[i].targetHeight;
-    renderables[i].steps = 10;
+    cluster[i].targetX = xPos;
+    cluster[i].targetY = yPos - cluster[i].targetHeight;
+    cluster[i].steps = 10;
+    cluster[i].visible = true;
 
-    xPos += renderables[i].targetWidth;
+    xPos += cluster[i].targetWidth;
   }
 }
 
 function setTargetValuesZoom()
 {
-  // TODO
+  // hide hovered element and display next levels clusters
+  var cluster = getCurrentCluster();
 }
 
 function getHovered(event)
 {
+  var cluster = getCurrentCluster();
+
   // get element which is hovered
-  for (var i=0; i < renderables.length; i++)
+  for (var i=0; i < cluster.length; i++)
   {
     // check bounds
-    if (renderables[i].currX <= event.clientX && renderables[i].currX + renderables[i].currWidth >= event.clientX)
+    if (cluster[i].currX <= event.clientX && cluster[i].currX + cluster[i].currWidth >= event.clientX)
     {
       return i;
     }
@@ -259,10 +276,12 @@ function canvasMouseClick(event)
     }
   } else {
     // get element which is clicked
-    for (var i=0; i < renderables.length; i++)
+
+    var cluster = getCurrentCluster();
+    for (var i=0; i < cluster.length; i++)
     {
       // check bounds
-      if (renderables[i].currX <= event.clientX && renderables[i].currX + renderables[i].currWidth >= event.clientX)
+      if (cluster[i].currX <= event.clientX && cluster[i].currX + cluster[i].currWidth >= event.clientX)
       {
         lastClicked = i;
         setTargetValuesOnClick(i);
@@ -274,8 +293,10 @@ function canvasMouseClick(event)
 
 function setTargetValuesOnClick(clicked)
 {
-  var imgWidth = renderables[0].defaultWidth * imgScalingFactor;
-  var imgHeight = renderables[0].defaultHeight * imgScalingFactor;
+  var cluster = getCurrentCluster();
+
+  var imgWidth = cluster[0].defaultWidth * imgScalingFactor;
+  var imgHeight = cluster[0].defaultHeight * imgScalingFactor;
 
   var pileLeftPosX = 0;
   var pileRightPosX = canvas.width - imgWidth/2;
@@ -284,39 +305,39 @@ function setTargetValuesOnClick(clicked)
   var pileRightPosY = 200;
 
   // center clicked image
-  renderables[clicked].targetX = (canvas.width/2) - (imgWidth/2);
-  renderables[clicked].targetY = 200;
-  renderables[clicked].steps = 10;
-  renderables[clicked].targetWidth = imgWidth;
-  renderables[clicked].targetHeight = imgHeight;
+  cluster[clicked].targetX = (canvas.width/2) - (imgWidth/2);
+  cluster[clicked].targetY = 200;
+  cluster[clicked].steps = 10;
+  cluster[clicked].targetWidth = imgWidth;
+  cluster[clicked].targetHeight = imgHeight;
 
   // pile renderables left from clicked on left side
   for(var i=0; i < clicked; i++)
   {
-    renderables[i].targetX = pileLeftPosX;
-    renderables[i].targetY = pileLeftPosY;
-    renderables[i].targetWidth = imgWidth/2;
-    renderables[i].targetHeight = imgHeight/2;
-    renderables[i].currZ = 1 + i;
+    cluster[i].targetX = pileLeftPosX;
+    cluster[i].targetY = pileLeftPosY;
+    cluster[i].targetWidth = imgWidth/2;
+    cluster[i].targetHeight = imgHeight/2;
+    cluster[i].currZ = 1 + i;
 
     pileLeftPosX += pileImageDisplacement;
     pileLeftPosY += pileImageDisplacement;
 
-    renderables[i].steps = 10;
+    cluster[i].steps = 10;
   }
 
   // pile renderables right from clicked on right side
-  for (var i=renderables.length-1; i > clicked; i--)
+  for (var i=cluster.length-1; i > clicked; i--)
   {
-    renderables[i].targetX = pileRightPosX;
-    renderables[i].targetY = pileRightPosY;
-    renderables[i].targetWidth = imgWidth/2;
-    renderables[i].targetHeight = imgHeight/2;
-    renderables[i].currZ = 1000 - i;
+    cluster[i].targetX = pileRightPosX;
+    cluster[i].targetY = pileRightPosY;
+    cluster[i].targetWidth = imgWidth/2;
+    cluster[i].targetHeight = imgHeight/2;
+    cluster[i].currZ = 1000 - i;
 
     pileRightPosX -= pileImageDisplacement;
     pileRightPosY += pileImageDisplacement;
 
-    renderables[i].steps = 10;
+    cluster[i].steps = 10;
   }
 }
