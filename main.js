@@ -8,6 +8,8 @@ var MainApplication = function()
   this.isShown = true;
   this.btnPlay = document.getElementById("play-pause");
   this.btnPlay.onmousedown = this.playPauseToggle.bind(this);
+  this.volumeBar = document.getElementById("volume-bar");
+  this.volumeBar.addEventListener("change", this.volumeChange.bind(this));
 
   // init autohide
   this.autohideInterval = 4000;
@@ -83,6 +85,11 @@ MainApplication.prototype.pause = function()
   this.btnPlay.className = "play";
   this.video.pause();
   this.isPlaying = false;
+}
+
+MainApplication.prototype.volumeChange = function(event)
+{
+  this.video.volume = this.volumeBar.value;
 }
 
 window.onload = function()
