@@ -11,7 +11,7 @@ var KeyframeBrowser = function(startPlaybackCallback, displayRangeCallback)
   this.yOffsetPile = this.yOffset-80;
   this.imgCount = 5; // of current level
   this.paddingPileToCoverflow = 10;
-  this.pileImageDisplacement = 10;
+  this.pileImageDisplacement = 5;
   this.calculatedImgWidth;
   this.pileWidth;
   this.xPosCoverflow;
@@ -196,21 +196,47 @@ KeyframeBrowser.prototype.displayCoverFlow = function(before, after)
   var imgWidth = cluster[0].defaultWidth * this.imgScalingFactor;
   var imgHeight = cluster[0].defaultHeight * this.imgScalingFactor;
 
-  var bigFactor;
-  var middleFactor;
+  var bigFactor = 1.5;
+  var middleFactor = 1;
   var smallFactor;
 
-  if (after.hovered === cluster.length - 1 || after.hovered === 0)
-  {
-    //xPos += this.calculatedImgWidth / 4;
-    bigFactor = 1.5;
-    middleFactor = 1;
-    smallFactor = 2.5 / (cluster.length - 2);
+  // calculate smallfactor depending on number of small frames to display
+  var numSmallFrames;
+  var remainingFactor;
+  if (after.hovered === 0 || after.hovered === cluster.length-1) {
+    numSmallFrames = Math.max(1, cluster.length - 2);
+    remainingFactor = 5 - (bigFactor + middleFactor);
   } else {
-    bigFactor = 1.5;
-    middleFactor = 1;
-    smallFactor = 1.5 / (cluster.length - 3);
+    numSmallFrames = Math.max(1, cluster.length - 3);
+    remainingFactor = 5 - (bigFactor + 2*middleFactor);
   }
+  smallFactor = Math.min(remainingFactor / numSmallFrames, (bigFactor + middleFactor) / 3);
+
+  // for cluster length < 5 padding will center frames (coverflow width is 5 * imgWidth)
+  var padding; // i.e. unused width of coverflow
+  switch (cluster.length) {
+    case 1:
+      padding = 5 - bigFactor;
+      break;
+    case 2:
+      padding = 5 - (bigFactor + middleFactor);
+      break;
+    case 3:
+      if (after.hovered === 1) {
+        padding = 5 - (bigFactor + 2*middleFactor);
+      } else {
+        padding = 5 - (bigFactor + middleFactor + smallFactor);
+      }
+      break;
+    default:
+      if (after.hovered === 0 || after.hovered === cluster.length-1) {
+        padding = 5 - (bigFactor + middleFactor + numSmallFrames * smallFactor);
+      } else {
+        padding = 5 - (bigFactor + 2*middleFactor + numSmallFrames * smallFactor);
+      }
+  }
+
+  xPos += padding * imgWidth/2;
 
   for(var i=0; i < cluster.length; i++)
   {
@@ -368,6 +394,37 @@ KeyframeBrowser.prototype.getCluster = function(level, appState)
   }
 }
 
+KeyframeBrowser.prototype.getClusterByPath = function(path)
+{
+  if (!path) {
+    return this.renderables;
+  }
+
+  var cluster = this.renderables;
+
+  for (var level=0; level<path.length; level++) {
+    cluster = cluster[path[level]].childs;
+  }
+
+  return cluster;
+}
+
+KeyframeBrowser.prototype.getCurrentPath = function()
+{
+  var path = [];
+
+  if (this.currentApplicationState.level0Selected !== undefined && this.currentApplicationState.level > 0) {
+    path.push(this.currentApplicationState.level0Selected);
+  }
+
+  if (this.currentApplicationState.level1Selected !== undefined && this.currentApplicationState.level > 1) {
+    path.push(this.currentApplicationState.level1Selected);
+  }
+
+  return path;
+
+}
+
 KeyframeBrowser.prototype.addListener = function(canvas)
 {
   canvas.onmousemove = this.canvasMouseMove.bind(this);
@@ -402,11 +459,18 @@ KeyframeBrowser.prototype.canvasOnMouseWheel = function(event)
   var hovered = this.getHovered(event);
   var afterState = this.currentApplicationState.clone();
 
+  var path = this.getCurrentPath();
+  if (path.length === 0 && hovered != -1) {
+    path.push(hovered);
+  }
+  var nextClusterLength = this.getClusterByPath(path).length;
+
   if (hovered != -1)
   {
     if (event.deltaY < 0 && this.currentApplicationState.level < 2)
     {
       afterState.zoomIn(hovered);
+      afterState.hovered = Math.min(nextClusterLength-1, hovered);
       this.displayApplicationState(this.currentApplicationState, afterState);
     }
     else if (event.deltaY > 0 && this.currentApplicationState.level > 0)
