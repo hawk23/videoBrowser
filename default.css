@@ -30,33 +30,51 @@ canvas#keyframeBrowser
 
 div#controls
 {
-  width: 100%;
+  width: 854px;
   background-color: black;
+  height: 30px;
+  float: left;
 }
 
-div#controls button
+div#controls button,
+div#controls input
 {
   cursor:pointer;
   background:black;
   border:none;
   text-indent: -9999em;
   font-size: 0em;
-  width: 30px;
   height: 30px;
+  margin: 0px;
+  line-height: 0px;
+  padding: 0px;
 }
 
-div#controls button.play
+button:focus,
+input:focus
+{
+  outline:0;
+}
+
+div#controls button#play-pause
+{
+  float: left;
+  width: 30px;
+}
+
+div#controls button#play-pause.play
 {
   background:url("media/normal/play_normal.png") no-repeat center center;
 }
 
-div#controls button.pause
+div#controls button#play-pause.pause
 {
   background:url("media/normal/pause_normal.png") no-repeat center center;
 }
 
-
-button:focus
+div#controls input#volume-bar
 {
-  outline:0;
+  margin-right: 6px;
+  float: right;
+  width: 80px;
 }
