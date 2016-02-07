@@ -38,7 +38,7 @@ KeyframeBrowser.prototype.loaded =  function(framesString)
   this.addListener(this.canvas);
 
   // create initial application state
-  this.currentApplicationState = new ApplicationState(0,0,0,2);
+  this.currentApplicationState = new ApplicationState(0,0,0,Math.round(this.renderables.length/2)-1);
 
   // display initial application state
   this.displayApplicationState(null, this.currentApplicationState);
