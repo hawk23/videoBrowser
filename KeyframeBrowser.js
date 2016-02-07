@@ -227,7 +227,7 @@ KeyframeBrowser.prototype.displayCoverFlow = function(before, after)
     else
     {
       cluster[i].targetWidth = imgWidth * smallFactor;
-      cluster[i].targetHeight = imgHeight *smallFactor;
+      cluster[i].targetHeight = imgHeight * smallFactor;
     }
 
     cluster[i].targetX = xPos;
@@ -472,5 +472,10 @@ KeyframeBrowser.prototype.getHovered = function(event)
 
 KeyframeBrowser.prototype.show = function(show)
 {
-  this.canvas.style.opacity = show ? 1 : 0;
+  if (show)
+  {
+    $("#keyframeBrowser").fadeIn();
+  } else {
+    $("#keyframeBrowser").fadeOut();
+  }
 }

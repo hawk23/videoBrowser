@@ -103,5 +103,10 @@ Number.prototype.toMMSS = function () {
 
 Timeline.prototype.show = function(show)
 {
-  this.canvas.style.opacity = show ? 1 : 0;
+  if (show)
+  {
+    $("#timeline").fadeIn();
+  } else {
+    $("#timeline").fadeOut();
+  }
 }
