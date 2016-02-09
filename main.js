@@ -24,7 +24,9 @@ var MainApplication = function()
 
 MainApplication.prototype.mainTimer = function()
 {
-  if (Date.now() - this.lastMove > this.autohideInterval && this.isShown)
+  var hovered = $("#container").find("#keyframeBrowser:hover").length > 0 || $("#container").find("#timeline:hover").length > 0;
+
+  if (Date.now() - this.lastMove > this.autohideInterval && this.isShown && !hovered)
   {
     this.isShown = false;
     this.showOverlay(this.isShown);
