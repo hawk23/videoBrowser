@@ -1,4 +1,4 @@
-var Renderable = function(currWidth, currHeight, currX, currY, currOpacity, image, defaultWidth, defaultHeight, visible, item)
+var Renderable = function(currWidth, currHeight, currX, currY, currOpacity, image, defaultWidth, defaultHeight, visible, item, timeFrom, timeTo)
 {
   this.currZ = 0;
   this.currWidth = currWidth;
@@ -22,4 +22,7 @@ var Renderable = function(currWidth, currHeight, currX, currY, currOpacity, imag
   this.childs = [];
   this.visible = visible;
   this.item = item;
+
+  this.timeFrom = timeFrom;
+  this.timeTo = timeTo;
 }

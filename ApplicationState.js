@@ -1,91 +1,58 @@
-var ApplicationState = function(level, level0Selected, level1Selected, hovered)
+var ApplicationState = function(hovered, path)
 {
-  // the zoom level of the Application
-  this.level = level;
-
-  // the selected item on top level
-  this.level0Selected = level0Selected;
-
-  // the selected item in second level
-  this.level1Selected = level1Selected;
-
   // the currently hoverd element in the cover flow.
   this.hovered = hovered;
+
+  if (path)
+  {
+    this.path = JSON.parse(JSON.stringify(path)); // deep copy
+  }
+  else
+  {
+    this.path = [];
+  }
+
+  this.getLevel = function()
+  {
+    return this.path.length;
+  }
+
 }
 
 ApplicationState.prototype.getParentItem = function()
 {
-  switch (this.level)
+  var parent = -1;
+
+  if (this.path.length > 0)
   {
-    case 1:
-      return this.level0Selected;
-    case 2:
-      return this.level1Selected;
-    default:
-      return -1;
+    parent = this.path[this.path.length-1];
   }
+
+  return parent;
 }
 
 ApplicationState.prototype.zoomIn = function(hovered)
 {
-  this.level++;
-
-  // check bounds
-  this.level = Math.min(2, this.level);
-
-  if (this.level == 1)
-  {
-    this.level0Selected = hovered;
-  }
-  else if (this.level == 2)
-  {
-    this.level1Selected = hovered;
-  }
+  this.path.push(hovered);
 }
 
 ApplicationState.prototype.zoomOut = function()
 {
-  this.level--;
-
-  // check bounds
-  this.level = Math.max(0, this.level);
+  this.path.pop();
 }
 
 ApplicationState.prototype.shiftRight = function()
 {
-  switch (this.level)
-  {
-    case 1:
-      this.level0Selected--;
-      this.level0Selected = Math.max(0, this.level0Selected);
-      this.level0Selected = Math.min(4, this.level0Selected);
-      break;
-    case 2:
-      this.level1Selected--;
-      this.level1Selected = Math.max(0, this.level1Selected);
-      this.level1Selected = Math.min(4, this.level1Selected);
-      break;
-  }
+  this.path[this.path.length-1] = Math.max(0, this.path[this.path.length-1] - 1);
 }
 
-ApplicationState.prototype.shiftLeft = function()
+ApplicationState.prototype.shiftLeft = function(maxIndex)
 {
-  switch (this.level)
-  {
-    case 1:
-      this.level0Selected++;
-      this.level0Selected = Math.max(0, this.level0Selected);
-      this.level0Selected = Math.min(4, this.level0Selected);
-      break;
-    case 2:
-      this.level1Selected++;
-      this.level1Selected = Math.max(0, this.level1Selected);
-      this.level1Selected = Math.min(4, this.level1Selected);
-      break;
-  }
+  //TODO check max shift!
+  this.path[this.path.length-1] = Math.min(maxIndex, this.path[this.path.length-1] + 1);
 }
 
 ApplicationState.prototype.clone = function()
 {
-  return new ApplicationState(this.level, this.level0Selected, this.level1Selected, this.hovered);
+  return new ApplicationState(this.hovered, this.path);
 }

@@ -38,7 +38,7 @@ KeyframeBrowser.prototype.loaded =  function(framesString)
   this.addListener(this.canvas);
 
   // create initial application state
-  this.currentApplicationState = new ApplicationState(0,0,0,Math.round(this.renderables.length/2)-1);
+  this.currentApplicationState = new ApplicationState(Math.round(this.renderables.length/2)-1);
 
   // display initial application state
   this.displayApplicationState(null, this.currentApplicationState);
@@ -68,7 +68,10 @@ KeyframeBrowser.prototype.buildRenderablesTree = function(images, renderEngine, 
       images[i].width,
       images[i].height,
       false,
-      images[i]);
+      images[i],
+      images[i].timeFrom,
+      images[i].timeTo
+    );
 
     targetCollection.push(renderable);
     renderEngine.addRenderable(renderable);
@@ -102,11 +105,17 @@ KeyframeBrowser.prototype.loadJSON = function(callback, file)
 
 KeyframeBrowser.prototype.displayApplicationState = function(before, after)
 {
-  if (before != null && before.level != after.level)
+  if (before != null && before.getLevel() != after.getLevel())
   {
     // fade out piles from higher levels
-    if (after.level >= 2) {
-      var oldCluster = this.getCluster(after.level - 2, before);
+    if (after.getLevel() >= 2) {
+
+      // first get path to old cluster at 2 levels above (note: make deep copy)
+      var pathToOldCluster = JSON.parse(JSON.stringify(after.path)); // deep copy
+      pathToOldCluster.pop();
+      pathToOldCluster.pop();
+      var oldCluster = this.getClusterFromPath(pathToOldCluster);
+
       for (var i=0; i<oldCluster.length; i++)
       {
         oldCluster[i].targetOpacity = 0;
@@ -117,7 +126,7 @@ KeyframeBrowser.prototype.displayApplicationState = function(before, after)
     this.displayZoom(before, after);
   }
 
-  if (before != null && before.getParentItem() != after.getParentItem() && before.level == after.level)
+  if (before != null && before.getParentItem() != after.getParentItem() && before.getLevel() == after.getLevel())
   {
     this.displayShift(before, after);
   }
@@ -131,12 +140,12 @@ KeyframeBrowser.prototype.displayApplicationState = function(before, after)
 
 KeyframeBrowser.prototype.displayTimeline = function(before, after)
 {
-  var cluster = this.getCluster(after.level, after);
+  var cluster = this.getClusterFromPath(after.path);
 
   if (cluster != null && cluster.length > 0)
   {
-    var secondsFrom = cluster[0].item.time;
-    var secondsTo = cluster[cluster.length-1].item.time;
+    var secondsFrom = cluster[0].timeFrom;
+    var secondsTo = cluster[cluster.length-1].timeTo;
 
     this.displayRangeCallback(secondsFrom, secondsTo);
   }
@@ -145,16 +154,16 @@ KeyframeBrowser.prototype.displayTimeline = function(before, after)
 KeyframeBrowser.prototype.displayZoom = function(before, after)
 {
   // zoom in
-  if (before.level < after.level)
+  if (before.getLevel() < after.getLevel())
   {
     // fade out hovered item
-    var cluster = this.getCluster(before.level, before);
+    var cluster = this.getClusterFromPath(before.path);
 
     cluster[after.getParentItem()].targetOpacity = 0;
     cluster[after.getParentItem()].steps = this.defaultSteps;
 
     // center all images of next cluster to get nice zoom in animation
-    var nextCluster = this.getCluster(after.level, after);
+    var nextCluster = this.getClusterFromPath(after.path);
     for (var i=0; i < nextCluster.length; i++)
     {
       nextCluster[i].currOpacity = 0;
@@ -165,16 +174,16 @@ KeyframeBrowser.prototype.displayZoom = function(before, after)
     }
   }
   // zoom out
-  else if (before.level > after.level)
+  else if (before.getLevel() > after.getLevel())
   {
     // fade in selected item from parent cluster
-    var cluster = this.getCluster(after.level, after);
+    var cluster = this.getClusterFromPath(after.path);
 
     cluster[after.hovered].currOpacity = 0;
     cluster[after.hovered].steps = this.defaultSteps;
 
     // fade out last cluster
-    var lastCluster = this.getCluster(before.level, before);
+    var lastCluster = this.getClusterFromPath(before.path);
     for (var i=0; i < lastCluster.length; i++)
     {
       lastCluster[i].targetOpacity = 0;
@@ -191,7 +200,7 @@ KeyframeBrowser.prototype.displayCoverFlow = function(before, after)
   var xPos = this.xPosCoverflow;
   var yPos = this.yOffset;
 
-  var cluster = this.getCluster(after.level, after);
+  var cluster = this.getClusterFromPath(after.path);
 
   var imgWidth = cluster[0].defaultWidth * this.imgScalingFactor;
   var imgHeight = cluster[0].defaultHeight * this.imgScalingFactor;
@@ -272,10 +281,13 @@ KeyframeBrowser.prototype.displayCoverFlow = function(before, after)
 KeyframeBrowser.prototype.displayPiles = function(before, after)
 {
   // piles can be only displayed when not level 0
-  if (after.level == 0) return;
+  if (after.getLevel() == 0) return;
 
   // get parent cluster
-  var cluster = this.getCluster(after.level - 1, after);
+  // first get path to parent (note: make deep copy)
+  var pathToParent = JSON.parse(JSON.stringify(after.path)); // deep copy
+  pathToParent.pop();
+  var cluster = this.getClusterFromPath(pathToParent);
 
   // determine selected element
   var selectedParent = after.getParentItem();
@@ -333,8 +345,8 @@ KeyframeBrowser.prototype.displayPiles = function(before, after)
  */
 KeyframeBrowser.prototype.displayShift = function(before, after)
 {
-  var cluster = this.getCluster(before.level, before);
-  var clusterNext = this.getCluster(after.level, after);
+  var cluster = this.getClusterFromPath(before.path);
+  var clusterNext = this.getClusterFromPath(after.path);
 
   var itemsOnLeftSide = before.getParentItem();
   var itemsOnRightSide = this.imgCount - itemsOnLeftSide - 1;
@@ -381,20 +393,7 @@ KeyframeBrowser.prototype.displayShift = function(before, after)
   }
 }
 
-KeyframeBrowser.prototype.getCluster = function(level, appState)
-{
-  if (level == 0) {
-    return this.renderables;
-  }
-  else if (level == 1) {
-    return this.renderables[appState.level0Selected].childs;
-  }
-  else if (level == 2) {
-    return this.renderables[appState.level0Selected].childs[appState.level1Selected].childs;
-  }
-}
-
-KeyframeBrowser.prototype.getClusterByPath = function(path)
+KeyframeBrowser.prototype.getClusterFromPath = function(path)
 {
   if (!path) {
     return this.renderables;
@@ -409,20 +408,9 @@ KeyframeBrowser.prototype.getClusterByPath = function(path)
   return cluster;
 }
 
-KeyframeBrowser.prototype.getCurrentPath = function()
+KeyframeBrowser.prototype.getCurrentCluster = function()
 {
-  var path = [];
-
-  if (this.currentApplicationState.level0Selected !== undefined && this.currentApplicationState.level > 0) {
-    path.push(this.currentApplicationState.level0Selected);
-  }
-
-  if (this.currentApplicationState.level1Selected !== undefined && this.currentApplicationState.level > 1) {
-    path.push(this.currentApplicationState.level1Selected);
-  }
-
-  return path;
-
+  return this.getClusterFromPath(this.currentApplicationState.path);
 }
 
 KeyframeBrowser.prototype.addListener = function(canvas)
@@ -459,21 +447,18 @@ KeyframeBrowser.prototype.canvasOnMouseWheel = function(event)
   var hovered = this.getHovered(event);
   var afterState = this.currentApplicationState.clone();
 
-  var path = this.getCurrentPath();
-  if (path.length === 0 && hovered != -1) {
-    path.push(hovered);
-  }
-  var nextClusterLength = this.getClusterByPath(path).length;
-
   if (hovered != -1)
   {
-    if (event.deltaY < 0 && this.currentApplicationState.level < 2)
+    if (event.deltaY < 0 && this.getCurrentCluster()[hovered].childs.length > 0)
     {
       afterState.zoomIn(hovered);
-      afterState.hovered = Math.min(nextClusterLength-1, hovered);
+
+      var selectedClusterLength = this.getClusterFromPath(afterState.path).length;
+
+      afterState.hovered = Math.min(selectedClusterLength-1, hovered);
       this.displayApplicationState(this.currentApplicationState, afterState);
     }
-    else if (event.deltaY > 0 && this.currentApplicationState.level > 0)
+    else if (event.deltaY > 0 && this.currentApplicationState.getLevel() > 0)
     {
       afterState.zoomOut();
       this.displayApplicationState(this.currentApplicationState, afterState);
@@ -485,6 +470,7 @@ KeyframeBrowser.prototype.canvasOnMouseWheel = function(event)
 
 KeyframeBrowser.prototype.canvasMouseClick = function(event)
 {
+  var pathToParent = JSON.parse(JSON.stringify(this.currentApplicationState.path)); // deep copy
   // check if clicked on a pile
   // left pile
   if (event.clientX <= this.pileWidth)
@@ -492,15 +478,31 @@ KeyframeBrowser.prototype.canvasMouseClick = function(event)
     var afterState = this.currentApplicationState.clone();
     afterState.shiftRight();
 
-    this.displayApplicationState(this.currentApplicationState, afterState);
+    // check if after state has children, if not a shift is not possible
+    if(this.getClusterFromPath(afterState.path).length > 0) {
+      this.displayApplicationState(this.currentApplicationState, afterState);
+    } else {
+      showNotAllowedCursor()
+    }
   }
   // right pile
   else if (event.clientX >= this.canvas.width - this.pileWidth)
   {
     var afterState = this.currentApplicationState.clone();
-    afterState.shiftLeft();
 
-    this.displayApplicationState(this.currentApplicationState, afterState);
+    // get length of parent cluster length
+    var pathToParent = JSON.parse(JSON.stringify(this.currentApplicationState.path)); // deep copy
+    pathToParent.pop();
+    var parentClusterLen = this.getClusterFromPath(pathToParent).length;
+
+    afterState.shiftLeft(parentClusterLen - 1);
+
+    // check if after state has children, if not a shift is not possible
+    if (this.getClusterFromPath(afterState.path).length > 0) {
+      this.displayApplicationState(this.currentApplicationState, afterState);
+    } else {
+      showNotAllowedCursor();
+    }
   }
   else
   {
@@ -509,7 +511,7 @@ KeyframeBrowser.prototype.canvasMouseClick = function(event)
 
     if (hovered != -1)
     {
-      var cluster = this.getCluster(this.currentApplicationState.level, this.currentApplicationState);
+      var cluster = this.getCurrentCluster();
       var playbackTime = cluster[hovered].item.time;
 
       this.startPlaybackCallback(playbackTime)
@@ -519,7 +521,7 @@ KeyframeBrowser.prototype.canvasMouseClick = function(event)
 
 KeyframeBrowser.prototype.getHovered = function(event)
 {
-  var cluster = this.getCluster(this.currentApplicationState.level, this.currentApplicationState);
+  var cluster = this.getCurrentCluster();
 
   // get element which is hovered
   for (var i=0; i < cluster.length; i++)
@@ -542,4 +544,11 @@ KeyframeBrowser.prototype.show = function(show)
   } else {
     $("#keyframeBrowser").fadeOut();
   }
+}
+
+var showNotAllowedCursor = function() {
+  $('#keyframeBrowser').css('cursor', 'not-allowed');
+  setTimeout(function () {
+    $('#keyframeBrowser').css('cursor', 'default');
+  }, 500);
 }
