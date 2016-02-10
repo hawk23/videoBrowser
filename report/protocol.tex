@@ -18,10 +18,13 @@
 
 \section*{Keyframes- und Segment-Generierung}
 Das Big Buck Bunny wurde als Testvideo für unseren Player verwendet. Hierfür wurden die Thumbnails mittels ffmpeg erstellt. Alle 5 Sekunden wird dabei ein Keyframe mit reduzierter Auflösung erstellt. \\
-Aus den Thumbnails wird mittels dem \texttt{clustering} Java-Programm ein Json-File erstellt, welches die unterschiedlichen Level der Segmente anzeigt. In dem Json-File steht für jeden Keyframe der Dateiname, die Abspielzeit in Sekunden im Video, und die jeweiligen Keyframes von einem Level drunter. Das mittlerste Keyframe ist dabei der Repräsentant für ein Level darüber.
+Aus den Thumbnails wird mittels dem \texttt{clustering} Java-Programm ein Json-File erstellt, welches die unterschiedlichen Level der Segmente anzeigt. In dem Json-File steht für jeden Keyframe der Dateiname, die \texttt{FromTime} und \texttt{ToTime} (d.h die früheste und späteste Zeit von allen Frames der Level drunter), die Abspielzeit in Sekunden im Video, und die jeweiligen Keyframes von einem Level drunter. Das mittlerste Keyframe ist dabei der Repräsentant für ein Level darüber.
 
 \section*{Timeline}
-Die Timeline kann parametrisiert über die Videolänge und die gewünschte Breite der Timeline erstellt werden. Hierfür werden innerhalb eines Canvas der blaue Hintergrundstreifen, die Timestamps und die zugehörigen Striche in entsprechenden Abständen generiert. Eine weitere Funktion bietet die Möglichkeit, einen bestimmten Bereich des Videos einzufärben. Dies wird für das Anzeigen der Positionen der Keyframes innerhalb des Videos genutzt.
+Die Timeline kann parametrisiert über die Videolänge und die gewünschte Breite der Timeline erstellt werden. Hierfür werden innerhalb eines Canvas der blaue Hintergrundstreifen, die Timestamps und die zugehörigen Striche in entsprechenden Abständen generiert. Eine weitere Funktion bietet die Möglichkeit, einen bestimmten Bereich des Videos einzufärben. Dies wird für das Anzeigen der Positionen der Keyframes innerhalb des Videos genutzt. Hierfür wird die \texttt{FromTime} des linkesten und die \texttt{ToTime} des rechtesten Keyframes der Timeline zum Einfärben übergeben. 
+
+\section*{Abspielen des Videos}
+Durch Klicken auf einen Keyframe wird das Video ab dieser Stelle abgespielt. Hierfür wird die Abspielzeit, die im Json-File zu dem zugehörigen Keyframe gespeichert war, dem Video zum Abspielen übergeben.
 
 %\begin{figure}[h!]
 %	\centering
