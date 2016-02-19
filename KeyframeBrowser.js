@@ -551,11 +551,18 @@ KeyframeBrowser.prototype.show = function(show)
   }
 }
 
-var showNotAllowedCursor = function() {
+var showNotAllowedCursor = function()
+{
   $('#keyframeBrowser').css('cursor', 'not-allowed');
-  setTimeout(function () {
-    $('#keyframeBrowser').css('cursor', 'default');
-  }, 500);
+
+  setTimeout(
+    function ()
+    {
+      $('#keyframeBrowser').css('cursor', 'default');
+    },
+    500
+  );
+
 }
 
 var getCursorPos = function (canvas, event)
