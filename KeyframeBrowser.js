@@ -179,6 +179,7 @@ KeyframeBrowser.prototype.displayZoom = function(before, after)
     // fade in selected item from parent cluster
     var cluster = this.getClusterFromPath(after.path);
 
+    after.hovered = Math.min(cluster.length-1, after.hovered);
     cluster[after.hovered].currOpacity = 0;
     cluster[after.hovered].steps = this.defaultSteps;
 
