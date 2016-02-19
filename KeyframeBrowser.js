@@ -423,8 +423,9 @@ KeyframeBrowser.prototype.addListener = function(canvas)
 
 KeyframeBrowser.prototype.canvasMouseMove = function(event)
 {
+  var posCursor = getCursorPos(this.canvas, event);
   // check if hovering on a pile
-  if (event.clientX <= this.pileWidth || event.clientX >= this.canvas.width - this.pileWidth) return;
+  if (posCursor.x <= this.pileWidth || posCursor.x >= this.canvas.width - this.pileWidth) return;
 
   var hovered = this.getHovered(event);
 
@@ -471,10 +472,12 @@ KeyframeBrowser.prototype.canvasOnMouseWheel = function(event)
 
 KeyframeBrowser.prototype.canvasMouseClick = function(event)
 {
-  var pathToParent = JSON.parse(JSON.stringify(this.currentApplicationState.path)); // deep copy
+
+  var posClicked = getCursorPos(this.canvas, event);
+
   // check if clicked on a pile
   // left pile
-  if (event.clientX <= this.pileWidth)
+  if (posClicked.x <= this.pileWidth)
   {
     var afterState = this.currentApplicationState.clone();
     afterState.shiftRight();
@@ -487,7 +490,7 @@ KeyframeBrowser.prototype.canvasMouseClick = function(event)
     }
   }
   // right pile
-  else if (event.clientX >= this.canvas.width - this.pileWidth)
+  else if (posClicked.x >= this.canvas.width - this.pileWidth)
   {
     var afterState = this.currentApplicationState.clone();
 
@@ -522,13 +525,14 @@ KeyframeBrowser.prototype.canvasMouseClick = function(event)
 
 KeyframeBrowser.prototype.getHovered = function(event)
 {
+  var posCursor = getCursorPos(this.canvas, event);
   var cluster = this.getCurrentCluster();
 
   // get element which is hovered
   for (var i=0; i < cluster.length; i++)
   {
     // check bounds
-    if (cluster[i].currX <= event.clientX && cluster[i].currX + cluster[i].currWidth >= event.clientX)
+    if (cluster[i].currX <= posCursor.x && cluster[i].currX + cluster[i].currWidth >= posCursor.x)
     {
       return i;
     }
@@ -552,4 +556,13 @@ var showNotAllowedCursor = function() {
   setTimeout(function () {
     $('#keyframeBrowser').css('cursor', 'default');
   }, 500);
+}
+
+var getCursorPos = function (canvas, event)
+{
+  var rect = canvas.getBoundingClientRect();
+  return {
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top
+  };
 }
