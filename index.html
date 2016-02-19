@@ -27,5 +27,17 @@
         <input type="range" id="volume-bar" min="0" max="1" step="0.1" value="1">
       </div>
     </div>
+    <script>
+
+      source = {
+        frameTreeFile: './frames.json',
+        thumbnailPath: 'thumbnails/'
+      };
+
+      window.onload = function()
+      {
+        var keyFrameBrowser = new MainApplication(source);
+      };
+    </script>
   </body>
 </html>

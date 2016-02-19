@@ -1,8 +1,8 @@
-var MainApplication = function()
+var MainApplication = function(source)
 {
   this.timelineCanvas = document.getElementById("timeline");
   this.timeline = new Timeline(this.timelineCanvas, 814, 596);
-  this.browser = new KeyframeBrowser(this.startPlayback.bind(this), this.displayRange.bind(this));
+  this.browser = new KeyframeBrowser(source, this.startPlayback.bind(this), this.displayRange.bind(this));
   this.video = document.getElementsByTagName("video")[0];
   this.isPlaying = false;
   this.isShown = true;
@@ -93,8 +93,3 @@ MainApplication.prototype.volumeChange = function(event)
 {
   this.video.volume = this.volumeBar.value;
 }
-
-window.onload = function()
-{
-  var mainApp = new MainApplication();
-};

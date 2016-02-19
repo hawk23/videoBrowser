@@ -1,5 +1,6 @@
-var KeyframeBrowser = function(startPlaybackCallback, displayRangeCallback)
+var KeyframeBrowser = function(source, startPlaybackCallback, displayRangeCallback)
 {
+  this.source = source;
   this.startPlaybackCallback = startPlaybackCallback;
   this.displayRangeCallback = displayRangeCallback;
 
@@ -19,7 +20,7 @@ var KeyframeBrowser = function(startPlaybackCallback, displayRangeCallback)
   this.currentApplicationState;
   this.defaultSteps = 10;
 
-  this.loadJSON(this.loaded.bind(this), './frames.json');
+  this.loadJSON(this.loaded.bind(this), source.frameTreeFile);
 }
 
 KeyframeBrowser.prototype.loaded =  function(framesString)
@@ -53,7 +54,7 @@ KeyframeBrowser.prototype.buildRenderablesTree = function(images, renderEngine, 
   for (var i=0; i < images.length; i++)
   {
     var imageObj = new Image();
-    imageObj.src = "thumbnails/" + images[i].src;
+    imageObj.src = this.source.thumbnailPath + images[i].src;
 
     if (!this.imgScalingFactor) {
       this.imgScalingFactor = this.calculatedImgWidth / images[i].width;
